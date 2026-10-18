@@ -16,7 +16,7 @@ Installation and integrations are not live yet. The interface uses “Coming soo
 
 Open `index.html` in a browser. The logo asset is stored in `assets/opensparkcode-logo.jpg`.
 
-This repository contains source only. No Vercel project or deployment has been created.
+Live website: https://opensparkcode.vercel.app/ (hosted on Vercel). The agent itself is still a product preview.
 
 ## Mode explorer
 
