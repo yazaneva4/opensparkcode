@@ -23,3 +23,7 @@ Live website: https://opensparkcode.vercel.app/ (hosted on Vercel). The agent it
 The landing page includes an interactive Local / Remote / Cloud setup preview and a Web platform row. Remote is selected initially. Select a card or tab to see how that mode is intended to work. Tabs support Left/Right, Home, and End keys. The original Chakra Petch and Hanken Grotesk font families are preserved.
 
 Remote execution and pairing are **not implemented** in this source-only site. No host is contacted, no credentials are collected, and no connection is simulated. A future remote implementation needs an agent host service, authenticated pairing, explicit project access, and connection lifecycle handling.
+
+## Website updates
+
+The live website deploys from its default GitHub branch. Open tabs check for a new deployment every 60 seconds and on focus/reconnect, offering a reload when ready. This updates the website preview; agent execution and remote pairing are still planned features.
