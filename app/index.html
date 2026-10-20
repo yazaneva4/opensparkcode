@@ -73,6 +73,8 @@ h1,h2,h3{font-family:var(--display);margin:0;line-height:1.05}
 .sidebar{width:220px;flex:none;border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:4px;background:#0f0f12}
 .side-brand{display:flex;align-items:center;gap:10px;font:700 17px var(--display);padding:4px 8px 16px}
 .side-brand b{color:var(--spark)}
+.newtask{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-bottom:10px}
+.tagsel{font-size:12px;font-weight:600;color:var(--ink);background:var(--spark);border-radius:999px;padding:3px 10px;flex:none}
 .logo-sm{width:28px;height:28px;border-radius:8px;display:block}
 .navbtn{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:var(--mute);text-align:left;padding:10px 12px;border-radius:10px;font-size:15px;font-weight:500}
 .navbtn svg{width:18px;height:18px;flex:none}
@@ -115,6 +117,9 @@ h1,h2,h3{font-family:var(--display);margin:0;line-height:1.05}
 .composer textarea{width:100%;min-height:84px;resize:none;border:0;background:transparent;outline:0;font-size:17px}
 .composer textarea::placeholder{color:#7d7d86}
 .composer-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.primary,.linkbtn,.chipbtn{white-space:nowrap}
+.composer-row{flex-wrap:wrap}
 .chipbtn{border:1px solid var(--line);background:var(--tile);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
 .chipbtn .star{width:12px;height:12px;color:var(--spark)}
 .primary{border:0;background:var(--spark);color:var(--ink);font-weight:700;padding:11px 20px;border-radius:12px;font-size:15px}
@@ -238,6 +243,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
         <div class="body">
           <aside class="sidebar">
             <div class="side-brand"><img class="logo-sm" src="logo.png" alt=""><span>Open<b>Spark</b>code</span></div>
+            <button class="primary newtask" data-action="newtask"><svg width="16" height="16"><use href="#i-plus"/></svg>New task</button>
             <button class="navbtn" data-view="home" aria-current="page"><svg><use href="#i-home"/></svg>Home</button>
             <button class="navbtn" data-view="sessions"><svg><use href="#i-clock"/></svg>Sessions</button>
             <button class="navbtn" data-view="projects"><svg><use href="#i-folder"/></svg>Projects</button>
@@ -250,21 +256,21 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
           <main class="main" id="main">
             <!-- home -->
             <section data-page="home">
-              <div class="where"><span><span class="dot"></span>Runs on <strong class="whereLabel">This computer</strong></span><button class="linkbtn" data-open="where">Change</button></div>
+              <div class="where"><span><span class="dot"></span>Runs on <strong class="whereLabel">This computer</strong></span><button class="linkbtn" data-open="where">Change machine</button></div>
               <h2 class="greet">What are we building?</h2>
               <p class="sub">Pick where the work happens, then describe the task.</p>
               <div class="modes">
-                <button class="modecard local" data-group="machines" aria-pressed="true"><strong>Your machine</strong><span id="localDesc">This computer, a remote one, or your VPS</span><em>Local and remote</em></button>
-                <button class="modecard cloud" data-group="cloud" aria-pressed="false"><strong>In the cloud</strong><span>A managed workspace on its own branch</span><em>Cloud</em></button>
+                <button class="modecard local" data-group="machines" aria-pressed="true"><strong>Your machine</strong><span id="localDesc">This computer, another computer, or your VPS</span><em>Select</em></button>
+                <button class="modecard cloud" data-group="cloud" aria-pressed="false"><strong>In the cloud</strong><span>A managed workspace on its own branch</span><em>Select</em></button>
               </div>
               <form class="composer" id="composer">
                 <textarea id="prompt" aria-label="Describe your task" placeholder="Describe a task, like “Add a dark mode toggle”"></textarea>
                 <div class="composer-row">
-                  <button type="button" class="chipbtn" data-open="model"><svg class="star"><use href="#i-star"/></svg><span id="modelLabel">Choose a model</span></button>
+                  <span class="chips"><button type="button" class="chipbtn" data-open="pickproject"><svg class="star"><use href="#i-folder"/></svg><span id="projLabel">opensparkcode</span></button><button type="button" class="chipbtn" data-open="model"><svg class="star"><use href="#i-star"/></svg><span id="modelLabel">Choose a model</span></button></span>
                   <button class="primary" type="submit">Plan task</button>
                 </div>
               </form>
-              <div class="section-h"><h2>Jump back in</h2><button class="linkbtn" data-view="projects">All projects</button></div>
+              <div class="section-h"><h2>Start in a project</h2><button class="linkbtn" data-view="projects">All projects</button></div>
               <div id="homeProjects"></div>
             </section>
 
@@ -288,7 +294,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
               <p class="sub">Your setup for this prototype.</p>
               <button class="item" data-open="where"><span class="ic"><svg><use href="#i-link"/></svg></span><span class="grow"><strong>Where the agent runs</strong><small class="whereLabel">This computer</small></span></button>
               <button class="item" data-open="model"><span class="ic"><svg><use href="#i-star"/></svg></span><span class="grow"><strong>Model</strong><small id="settingsModel">Not chosen yet</small></span></button>
-              <button class="item" data-action="reset"><span class="ic"><svg><use href="#i-clock"/></svg></span><span class="grow"><strong>Reset the prototype</strong><small>Clear tasks, projects, and choices</small></span></button>
+              <button class="item" data-action="reset"><span class="ic"><svg><use href="#i-clock"/></svg></span><span class="grow"><strong>Start over</strong><small>Clear the task, model, and projects you added</small></span></button>
             </section>
 
             <!-- task -->
@@ -303,12 +309,13 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
                 <li>Make the change on a new branch</li>
                 <li>Run checks and prepare the changes for review</li>
               </ol>
-              <div class="actions" id="planActions"><button class="primary" id="run">Approve and run</button></div>
-              <div class="actions hidden" id="runActions"><button class="secondary" id="stop">Stop</button></div>
+              <div class="actions" id="planActions"><button class="secondary" id="edit">Edit task</button><button class="primary" id="run">Approve and run</button></div>
+              <div class="actions hidden" id="runActions"><button class="secondary" id="stop">Stop run</button></div>
               <div id="review" class="hidden">
                 <div class="stats"><div><strong>+12 −3</strong>Sample changes</div><div><strong style="color:var(--green)">3 passed</strong>Sample checks</div></div>
                 <div class="diff" id="diff"></div>
-                <div class="actions"><button class="secondary" id="discard">Discard</button><button class="primary" id="accept">Accept changes</button></div>
+                <div class="actions"><button class="secondary" id="discard">Discard changes</button><button class="primary" id="accept">Accept changes</button></div>
+                <div class="actions hidden" id="doneActions"><button class="primary" id="another">Start another task</button></div>
                 <p class="hint" id="reviewNote">This is a sample diff. Accepting only updates the prototype.</p>
               </div>
             </section>
@@ -351,6 +358,15 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
             <label class="f" for="modelName">Model name</label>
             <input class="field" id="modelName" maxlength="60" placeholder="Type the model you want to use">
             <button class="primary" id="saveModel">Use this model</button>
+          </div>
+        </div>
+        <!-- sheet: pick project -->
+        <div class="scrim hidden" data-sheet="pickproject" role="dialog" aria-modal="true" aria-labelledby="ppH">
+          <div class="sheet">
+            <div class="sheet-h"><h2 id="ppH">Which project?</h2><button class="x" data-close aria-label="Close">×</button></div>
+            <p>The agent only works in the project you pick.</p>
+            <div id="ppOpts" role="radiogroup" aria-labelledby="ppH"></div>
+            <button class="secondary" style="width:100%;margin-top:6px" data-open="project">New project</button>
           </div>
         </div>
         <!-- sheet: project -->
@@ -421,10 +437,10 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   }
   function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function icon(name){ const s = document.createElementNS('http://www.w3.org/2000/svg','svg'); const u = document.createElementNS('http://www.w3.org/2000/svg','use'); u.setAttribute('href','#i-'+name); s.append(u); return s; }
-  function item(iconName, title, sub, onClick){
+  function item(iconName, title, sub, onClick, selected){
     const b = el('button','item'); const ic = el('span','ic'); ic.append(icon(iconName));
     const g = el('span','grow'); g.append(el('strong',null,title), el('small',null,sub));
-    b.append(ic,g); b.type='button'; b.addEventListener('click', onClick); return b;
+    b.append(ic,g); if (selected) b.append(el('span','tagsel','Selected')); b.type='button'; b.addEventListener('click', onClick); return b;
   }
 
   function render(){
@@ -434,28 +450,37 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     $$('.modecard').forEach(c => c.setAttribute('aria-pressed', String((c.dataset.group === 'cloud') === isCloud)));
     const m = state.model ? `${state.provider} · ${state.model}` : 'Not chosen yet';
     $('#modelLabel').textContent = state.model ? (state.model.length > 22 ? state.model.slice(0,22) + '…' : state.model) : 'Choose a model';
-    $('#settingsModel').textContent = m; $('#inspModel').textContent = m; $('#inspProject').textContent = state.project;
+    $('#projLabel').textContent = state.project; $('#settingsModel').textContent = m; $('#inspModel').textContent = m; $('#inspProject').textContent = state.project;
 
     const side = $('#sideProjects'); side.replaceChildren();
     state.projects.forEach(p => { const b = el('button','navbtn side-proj'); b.type='button'; b.append(icon('folder'), document.createTextNode(p)); b.addEventListener('click', () => pickProject(p)); side.append(b); });
 
     const hp = $('#homeProjects'); hp.replaceChildren();
-    state.projects.slice(0,2).forEach(p => hp.append(item('branch', p, `yazaneva4/${p} · main`, () => pickProject(p))));
+    state.projects.forEach(p => hp.append(item('branch', p, `yazaneva4/${p} · main`, () => pickProject(p), p === state.project)));
 
     const pl = $('#projectList'); pl.replaceChildren();
-    state.projects.forEach(p => pl.append(item('folder', p, `${hostLabel()} · sample project`, () => pickProject(p))));
+    state.projects.forEach(p => pl.append(item('folder', p, `${hostLabel()} · sample project`, () => pickProject(p), p === state.project)));
 
     const sl = $('#sessionList'); sl.replaceChildren();
     if (!state.task) { const e = el('div','empty','No sessions yet. Plan a task from Home to see one here.'); sl.append(e); }
     else sl.append(item('clock', state.task, `${state.stage} · ${state.project}`, () => view('task')));
   }
 
-  function pickProject(p){ state.project = p; view('home'); $('#prompt').value = `Improve the layout of ${p} on small screens`; toast(`Project: ${p}`); }
+  function pickProject(p){ state.project = p; view('home'); toast(`Working in ${p}`); $('#prompt').focus(); }
+  function buildPP(){
+    const box = $('#ppOpts'); box.replaceChildren();
+    state.projects.forEach(p => {
+      const b = el('button','opt'); b.type='button'; b.setAttribute('role','radio'); b.setAttribute('aria-checked', String(p === state.project));
+      const ic = el('span','ic'); ic.append(icon('folder')); const g = el('span'); g.append(el('strong',null,p), el('small',null,`yazaneva4/${p} · main`));
+      b.append(ic, g, el('span','radio')); b.addEventListener('click', () => { state.project = p; closeSheets(); render(); toast(`Working in ${p}`); }); box.append(b);
+    });
+  }
 
   /* ----- sheets ----- */
   function openSheet(name){
     closeSheets();
     if (name === 'where') buildWhere();
+    if (name === 'pickproject') buildPP();
     const s = $(`[data-sheet="${name}"]`); s.classList.remove('hidden');
     const f = s.querySelector('input,select,button[aria-checked="true"],button'); if (f) f.focus();
   }
@@ -506,6 +531,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     $('#taskMeta').textContent = `${state.project} · ${hostLabel()} · ${state.provider} ${state.model} · branch spark/task-1`;
     steps().forEach(li => li.className = 'wait');
     $('#planActions').classList.remove('hidden'); $('#runActions').classList.add('hidden'); $('#review').classList.add('hidden');
+    $('#accept').closest('.actions').classList.remove('hidden'); $('#doneActions').classList.add('hidden');
     setStage(1, 'Plan ready for review'); view('task');
   });
   const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -524,6 +550,8 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     $('#reviewNote').textContent = 'This is a sample diff. Accepting only updates the prototype.';
     setStage(3, 'Ready for your review'); showDiff();
   });
+  $('#edit').addEventListener('click', () => { $('#prompt').value = state.task; view('home'); $('#prompt').focus(); });
+  $('#another').addEventListener('click', () => { $('#prompt').value = ''; view('home'); $('#prompt').focus(); });
   $('#stop').addEventListener('click', () => {
     state.run++; steps().forEach(li => li.className = 'wait');
     $('#runActions').classList.add('hidden'); $('#planActions').classList.remove('hidden');
@@ -535,7 +563,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     lines.forEach(([c,t]) => { d.append(el('span', c, t), document.createTextNode('\n')); });
   }
   [['#accept','Accepted','Changes accepted in the prototype. No repository was changed.'],['#discard','Discarded','Changes discarded.']].forEach(([id,label,note]) => {
-    $(id).addEventListener('click', () => { setStage(3, label); $('#reviewNote').textContent = note; $('#accept').disabled = $('#discard').disabled = true; toast(label); });
+    $(id).addEventListener('click', () => { setStage(3, label); $('#reviewNote').textContent = note; $('#accept').closest('.actions').classList.add('hidden'); $('#doneActions').classList.remove('hidden'); toast(label); });
   });
 
   /* ----- global clicks ----- */
@@ -545,17 +573,17 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     if (e.target.closest('[data-close]') || e.target.classList.contains('scrim')) closeSheets();
     const g = e.target.closest('[data-group]');
     if (g) {
-      openSheet('where');
-      state.pending = g.dataset.group === 'cloud' ? 'cloud' : (state.kind === 'phone' ? 'remote' : 'local');
-      if (g.dataset.group !== 'cloud' && state.host !== 'cloud') state.pending = state.host;
-      buildWhere(true);
+      if (g.dataset.group === 'cloud') state.host = 'cloud';
+      else if (state.host === 'cloud') state.host = state.kind === 'phone' ? 'remote' : 'local';
+      render(); toast(`Runs on: ${hostLabel()}`);
     }
+    if (e.target.closest('[data-action="newtask"]')) { $('#prompt').value=''; view('home'); $('#prompt').focus(); }
     if (e.target.closest('[data-action="reset"]')) {
       Object.assign(state, {host: state.kind === 'phone' ? 'cloud' : 'local', hostName:'', model:'', provider:'', projects:['opensparkcode','sparkcode-docs'], project:'opensparkcode', task:'', stage:''});
-      state.run++; $('#prompt').value=''; $('#modelName').value=''; $('#hostName').value=''; view('home'); toast('Prototype reset');
+      state.run++; $('#prompt').value=''; $('#modelName').value=''; $('#hostName').value=''; view('home'); toast('Started over');
     }
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && e.target.id === 'prompt') $('#composer').requestSubmit(); });
 
   let t;
   function toast(msg){ const el = $('#toast'); el.textContent = msg; el.classList.remove('hidden'); clearTimeout(t); t = setTimeout(() => el.classList.add('hidden'), 2600); }
