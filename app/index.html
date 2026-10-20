@@ -228,6 +228,9 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
 .branchtag{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--green);overflow-wrap:anywhere;text-align:right}
 .rowlabel{font-size:14px;font-weight:600;margin:16px 0 6px;overflow-wrap:anywhere}
 .rowlabel+.field{margin-top:0}
+.paircode{font:700 44px/1 var(--display);letter-spacing:.08em;text-align:center;padding:22px 0;margin:6px 0 4px;border-radius:16px;background:#08080a;border:1px solid #34343a;color:var(--spark)}
+.steps{margin:6px 0 4px;padding-left:20px;color:var(--text)}
+.steps li{margin:6px 0}
 .dangerlink{border:0;background:transparent;color:var(--mute);font-size:13px;text-decoration:underline;padding:4px 0}
 
 @media(max-width:700px){
@@ -300,7 +303,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
                 <h2 class="greet">What are we building?</h2>
                 <p class="sub">First, pick where the agent runs.</p>
                 <div class="modes">
-                  <button class="modecard local" data-mode="machine"><strong>Your machine</strong><span>This computer, or a cloud VPS you manage</span><em>Set up</em></button>
+                  <button class="modecard local" data-mode="machine"><strong>Your machine</strong><span id="machineDesc">This computer, or a cloud VPS you manage</span><em>Set up</em></button>
                   <button class="modecard cloud" data-mode="cloud"><strong>In the cloud</strong><span>A managed workspace that works on new branches of your GitHub repos</span><em>Set up</em></button>
                 </div>
               </div>
@@ -398,12 +401,23 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
           </div>
         </div>
 
+        <!-- sheet: pair a phone (shown on the computer) -->
+        <div class="scrim hidden" data-sheet="pairphone" role="dialog" aria-modal="true" aria-labelledby="pairH">
+          <div class="sheet">
+            <div class="sheet-h"><h2 id="pairH">Pair a phone</h2><button class="x" data-close aria-label="Close">×</button></div>
+            <p>Open OpenSparkcode on your phone, choose Your machine, then My computer, and enter this code.</p>
+            <div class="paircode" aria-label="Pairing code 4 8 2 9 1 3">482 913</div>
+            <p class="hint">The code works once. In the real app it expires after a few minutes.</p>
+            <button class="primary" data-close>Done</button>
+          </div>
+        </div>
+
         <div class="toast hidden" id="toast" role="status"></div>
       </div>
     </div>
   </div>
 
-  <div class="note"><span>Prototype only. Taps and clicks are simulated.</span><span>Desktop runs local, VPS, or cloud. Phone controls a VPS or the cloud.</span></div>
+  <div class="note"><span>Prototype only. Taps and clicks are simulated.</span><span>Desktop runs local, VPS, or cloud. Phone controls your computer, a VPS, or the cloud.</span></div>
 </div>
 
 <script>
@@ -428,6 +442,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
 
   const REPOS = ['opensparkcode', 'sparkcode-docs', 'my-website', 'mobile-app', 'api-server'];
   const FOLDERS = {
+    remote: ['~/Projects/opensparkcode', '~/Projects/sparkcode-docs', '~/Desktop/my-website'],
     local: ['~/Projects/opensparkcode', '~/Projects/sparkcode-docs', '~/Desktop/my-website'],
     vps:   ['/srv/opensparkcode', '/srv/sparkcode-docs', '/home/dev/my-website']
   };
@@ -439,6 +454,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     github:false, ghUser:'yazaneva4',
     repos:[], folder:'',
     vps:{name:'', addr:'', connected:false},
+    remote:{name:'', paired:false}, pairCode:'482913',
     ready:false, justReady:'',
     model:'', provider:'', task:'', stage:'', run:0,
     setup:{mode:null, key:'', sel:'', picked:[], names:{}, adding:false, busy:false, err:''}
@@ -450,6 +466,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     if (state.mode === 'cloud') return 'Managed cloud';
     if (state.machine === 'vps') return 'Cloud VPS' + (state.vps.name ? ' (' + state.vps.name + ')' : '');
     if (state.machine === 'local') return 'This computer';
+    if (state.machine === 'remote') return 'My computer' + (state.remote.name ? ' (' + state.remote.name + ')' : '');
     return 'Not set up yet';
   }
   function workspaceLabel(){
@@ -465,7 +482,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     device.classList.toggle('is-phone', kind === 'phone');
     device.setAttribute('aria-label', 'OpenSparkcode ' + kind + ' prototype');
     $$('[data-device]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.device === kind)));
-    if (kind === 'phone' && state.machine === 'local') { state.mode = null; state.machine = null; state.ready = false; state.folder = ''; }
+    if ((kind === 'phone' && state.machine === 'local') || (kind === 'desktop' && state.machine === 'remote')) { state.mode = null; state.machine = null; state.ready = false; state.folder = ''; }
     try { localStorage.setItem('osc-device', kind); } catch (e) {}
     closeSheets();
     if (currentView() === 'setup') view('home'); else render();
@@ -512,12 +529,13 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     $('#settingsModel').textContent = m; $('#inspModel').textContent = m;
 
     // home
+    $('#machineDesc').textContent = state.kind === 'phone' ? 'Your computer from afar, or a cloud VPS you manage' : 'This computer, or a cloud VPS you manage';
     $('#homeSetup').classList.toggle('hidden', state.ready);
     $('#homeReady').classList.toggle('hidden', !state.ready);
     $('#whereLabel').textContent = w;
     const wl = $('#wsList'); wl.replaceChildren();
     if (state.mode === 'cloud') state.repos.forEach(r => wl.append(h('div',{class:'ws-row'}, h('span',null, h('strong',null,`${state.ghUser}/${r.name}`), h('small',{style:'color:var(--mute);font-size:13px'},'Works only on this new branch')), h('span',{class:'branchtag'}, r.branch))));
-    else wl.append(h('div',{class:'ws-row'}, h('span',null, h('strong',null,state.folder), h('small',{style:'color:var(--mute);font-size:13px'}, state.machine === 'vps' ? `On your server ${state.vps.name || state.vps.addr}` : 'On this computer'))));
+    else wl.append(h('div',{class:'ws-row'}, h('span',null, h('strong',null,state.folder), h('small',{style:'color:var(--mute);font-size:13px'}, state.machine === 'vps' ? `On your server ${state.vps.name || state.vps.addr}` : (state.machine === 'remote' ? `On ${state.remote.name}, controlled from this phone` : 'On this computer')))));
     $('#addRepo').classList.toggle('hidden', state.mode !== 'cloud' || state.repos.length >= REPOS.length);
     const bn = $('#banner'); bn.classList.toggle('hidden', !state.justReady); $('#bannerText').textContent = state.justReady;
 
@@ -539,7 +557,15 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     box.append(state.vps.connected
       ? item('server', 'Cloud VPS', `Connected to ${state.vps.name || state.vps.addr}`, 'Disconnect', () => disconnectVps())
       : item('server', 'Cloud VPS', 'Not connected. Run the agent on a server you manage.', 'Connect a VPS', () => startSetup('machine', 'vps'), 'primary'));
+    if (state.kind === 'phone') {
+      box.append(state.remote.paired
+        ? item('laptop', 'My computer', `Paired with ${state.remote.name}`, 'Unpair', () => disconnectRemote())
+        : item('laptop', 'My computer', 'Not paired. Control your computer from this phone.', 'Pair your computer', () => startSetup('machine', 'remote'), 'primary'));
+    }
     if (state.kind === 'desktop') {
+      box.append(state.remote.paired
+        ? item('phone', 'Phone remote', 'A phone is paired with this computer.', 'Unpair', () => disconnectRemote())
+        : item('phone', 'Phone remote', 'Control this computer from your phone.', 'Pair a phone', () => openSheet('pairphone'), 'primary'));
       box.append(item('laptop', 'This computer', state.machine === 'local' && state.folder ? `Folder: ${state.folder}` : 'No folder chosen yet.', state.machine === 'local' && state.folder ? 'Change folder' : 'Choose a folder', () => startSetup('machine', 'local'), state.folder ? '' : 'primary'));
     }
   }
@@ -547,6 +573,11 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     state.github = false; try { localStorage.removeItem('osc-gh'); } catch (e) {}
     if (state.mode === 'cloud') { state.ready = false; state.mode = null; state.repos = []; }
     render(); toast('GitHub disconnected');
+  }
+  function disconnectRemote(){
+    state.remote = {name:'', paired:false};
+    if (state.machine === 'remote') { state.ready = false; state.mode = null; state.machine = null; state.folder = ''; }
+    render(); toast(state.kind === 'phone' ? 'Computer unpaired' : 'Phone unpaired');
   }
   function disconnectVps(){
     state.vps = {name:'', addr:'', connected:false};
@@ -557,9 +588,9 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   /* ----- setup flow ----- */
   function stepsFor(mode){
     if (mode === 'cloud') return [{k:'gh',t:'Connect GitHub'},{k:'repo',t:'Repositories'},{k:'branch',t:'New branches'}];
-    return state.pendingMachine === 'vps'
-      ? [{k:'kind',t:'Choose'},{k:'connect',t:'Connect server'},{k:'folder',t:'Folder'}]
-      : [{k:'kind',t:'Choose'},{k:'folder',t:'Folder'}];
+    if (state.pendingMachine === 'vps') return [{k:'kind',t:'Choose'},{k:'connect',t:'Connect server'},{k:'folder',t:'Folder'}];
+    if (state.pendingMachine === 'remote') return [{k:'kind',t:'Choose'},{k:'pair',t:'Pair computer'},{k:'folder',t:'Folder'}];
+    return [{k:'kind',t:'Choose'},{k:'folder',t:'Folder'}];
   }
   function startSetup(mode, machine, adding){
     state.setup = {mode, key:'', sel:'', picked:[], names:{}, adding:!!adding, busy:false, err:''};
@@ -567,6 +598,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     if (mode === 'cloud' && !adding) state.repos = [];
     if (mode === 'cloud') state.setup.key = state.github ? 'repo' : 'gh';
     else if (machine === 'vps') state.setup.key = state.vps.connected ? 'folder' : 'connect';
+    else if (machine === 'remote') state.setup.key = state.remote.paired ? 'folder' : 'pair';
     else if (machine === 'local') state.setup.key = 'folder';
     else state.setup.key = 'kind';
     view('setup');
@@ -589,9 +621,13 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
 
     /* machine: choose local or VPS */
     if (s.key === 'kind') {
-      body.append(h('h2',{class:'setup-h'},'Which machine?'), h('p',{class:'sub'},'The agent works in a folder on the machine you pick.'));
-      const local = h('button', {type:'button', class:'choice', disabled: state.kind === 'phone', onclick:() => { state.pendingMachine = 'local'; goStep('folder'); }},
-        h('span',{class:'ic'}, icon('laptop')), h('span',null, h('strong',null,'Local'), h('small',null, state.kind === 'phone' ? 'Only on the desktop app' : 'This computer')), h('span',{class:'go'}, state.kind === 'phone' ? '' : 'Choose'));
+      body.append(h('h2',{class:'setup-h'},'Which machine?'), h('p',{class:'sub'}, state.kind === 'phone' ? 'Your phone is the remote control. The agent works in a folder on the machine you pick.' : 'The agent works in a folder on the machine you pick.'));
+      const phone = state.kind === 'phone';
+      const local = phone
+        ? h('button', {type:'button', class:'choice', onclick:() => { state.pendingMachine = 'remote'; goStep(state.remote.paired ? 'folder' : 'pair'); }},
+            h('span',{class:'ic'}, icon('laptop')), h('span',null, h('strong',null,'My computer'), h('small',null,'Control your computer from this phone')), h('span',{class:'go'}, 'Choose'))
+        : h('button', {type:'button', class:'choice', onclick:() => { state.pendingMachine = 'local'; goStep('folder'); }},
+            h('span',{class:'ic'}, icon('laptop')), h('span',null, h('strong',null,'Local'), h('small',null,'This computer')), h('span',{class:'go'}, 'Choose'));
       const vps = h('button', {type:'button', class:'choice', onclick:() => { state.pendingMachine = 'vps'; goStep(state.vps.connected ? 'folder' : 'connect'); }},
         h('span',{class:'ic'}, icon('server')), h('span',null, h('strong',null,'Cloud VPS'), h('small',null,'A Linux server you manage')), h('span',{class:'go'}, 'Choose'));
       body.append(local, vps, h('div',{class:'navrow'}, back(backHome)));
@@ -612,21 +648,39 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
       body.append(h('label',{class:'f', for:'vpsName'},'Name'), name, h('label',{class:'f', for:'vpsAddr'},'Address'), addr, err, h('div',{class:'navrow'}, back(() => { state.pendingMachine = null; goStep('kind'); }), btn));
     }
 
-    /* folder (local or vps) */
+    /* pair a computer (phone remote) */
+    else if (s.key === 'pair') {
+      body.append(h('h2',{class:'setup-h'},'Pair your computer'), h('p',{class:'sub'},'Your computer runs the agent. This phone controls it.'));
+      body.append(h('ol',{class:'steps'}, h('li',null,'Open OpenSparkcode on your computer.'), h('li',null,'Go to Connections and choose Pair a phone.'), h('li',null,'Enter the 6-digit code it shows.')));
+      const code = h('input',{class:'field', id:'pairCode', inputmode:'numeric', maxlength:'7', placeholder:'000 000', autocomplete:'one-time-code', 'aria-label':'Pairing code', value:s.sel || ''});
+      const err = h('div',{class:'err', id:'pairErr'}, s.err);
+      const btn = h('button',{type:'button', class:'primary', disabled:s.busy, onclick:() => {
+        const v = code.value.replace(/\s/g,'');
+        if (v !== state.pairCode) { state.setup.sel = code.value; state.setup.err = v.length < 6 ? 'Enter all 6 digits.' : 'That code does not match. Check your computer and try again.'; err.textContent = state.setup.err; code.focus(); return; }
+        state.setup.busy = true; state.setup.err = ''; renderSetup();
+        setTimeout(() => { if (state.setup.key !== 'pair') return; state.remote = {name:'Studio Mac', paired:true}; goStep('folder'); toast('Computer paired'); }, 1200);
+      }}, s.busy ? 'Pairing\u2026' : 'Pair computer');
+      body.append(h('label',{class:'f', for:'pairCode'},'Pairing code'), code, err, h('p',{class:'hint'},'Prototype: use the code 482 913, also shown on the desktop version under Connections.'), h('div',{class:'navrow'}, back(() => { state.pendingMachine = null; goStep('kind'); }), btn));
+    }
+
+    /* folder (local, remote computer or vps) */
     else if (s.key === 'folder') {
       const kind = state.pendingMachine || state.machine || 'local';
       const list = FOLDERS[kind];
+      const onComputer = kind === 'remote' ? 'on your paired computer' : 'on your computer';
       if (kind === 'vps') body.append(h('div',{class:'okbox'}, icon('check'), `Connected to ${state.vps.name || state.vps.addr}`));
-      body.append(h('h2',{class:'setup-h'},'Choose a project folder'), h('p',{class:'sub'}, kind === 'vps' ? 'The agent only works inside this folder on your server.' : 'The agent only works inside this folder on your computer.'));
+      if (kind === 'remote') body.append(h('div',{class:'okbox'}, icon('check'), `Paired with ${state.remote.name}`));
+      body.append(h('h2',{class:'setup-h'},'Choose a project folder'), h('p',{class:'sub'}, kind === 'vps' ? 'The agent only works inside this folder on your server.' : `The agent only works inside this folder ${onComputer}.`));
       const group = h('div',{role:'radiogroup','aria-label':'Project folder'});
       list.forEach(f => group.append(h('button',{type:'button', class:'opt', role:'radio','aria-checked':String(s.sel === f), onclick:() => { state.setup.sel = f; renderSetup(); }},
         h('span',{class:'ic'}, icon('folder')), h('span',null, h('strong',null,f)), h('span',{class:'radio'}))));
       const go = h('button',{type:'button', class:'primary', disabled:!s.sel, onclick:() => {
         state.mode = 'machine'; state.machine = kind; state.folder = s.sel;
-        finishSetup(kind === 'vps' ? `Ready. The agent will work in ${s.sel} on your server.` : `Ready. The agent will work in ${s.sel}.`, true);
+        finishSetup(kind === 'vps' ? `Ready. The agent will work in ${s.sel} on your server.` : (kind === 'remote' ? `Ready. The agent will work in ${s.sel} on ${state.remote.name}.` : `Ready. The agent will work in ${s.sel}.`), true);
       }}, 'Use this folder');
-      const prev = kind === 'vps' && !state.vps.connected ? () => goStep('connect') : () => { state.pendingMachine = null; goStep('kind'); };
+      const prev = kind === 'vps' && !state.vps.connected ? () => goStep('connect') : kind === 'remote' && !state.remote.paired ? () => goStep('pair') : () => { state.pendingMachine = null; goStep('kind'); };
       body.append(group, h('div',{class:'navrow'}, back(prev), go));
+      if (kind === 'remote' && state.remote.paired) body.append(h('p',{class:'hint'}, h('button',{type:'button', class:'dangerlink', onclick:() => { disconnectRemote(); goStep('pair'); }}, 'Pair a different computer')));
       if (kind === 'vps' && state.vps.connected) body.append(h('p',{class:'hint'}, h('button',{type:'button', class:'dangerlink', onclick:() => { disconnectVps(); goStep('connect'); }}, 'Use a different server')));
     }
 
@@ -721,7 +775,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     $('#taskMeta').textContent = `${workspaceLabel()} · ${state.provider} ${state.model}`;
     const li = steps();
     li[0].textContent = 'Read the project and find the files involved';
-    li[1].textContent = !isCloud() ? `Make the change in ${state.folder}` : (state.repos.length === 1 ? `Make the change on ${state.repos[0].branch}` : `Make the change on each repository's own new branch`);
+    li[1].textContent = !isCloud() ? `Make the change in ${state.folder}${state.machine === 'remote' ? ' on ' + state.remote.name : ''}` : (state.repos.length === 1 ? `Make the change on ${state.repos[0].branch}` : `Make the change on each repository's own new branch`);
     li[2].textContent = 'Run checks and prepare the changes for review';
     li.forEach(x => x.className = 'wait');
     $('#accept').textContent = isCloud() ? (state.repos.length > 1 ? 'Open pull requests' : 'Open pull request') : 'Keep changes';
@@ -781,7 +835,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     if (e.target.closest('[data-action="newtask"]')) { $('#prompt').value = ''; view('home'); if (state.ready) $('#prompt').focus(); }
     if (e.target.closest('[data-action="reset"]')) {
       state.mode = null; state.machine = null; state.ready = false; state.justReady = ''; state.github = false; state.repos = []; state.folder = '';
-      state.vps = {name:'', addr:'', connected:false}; state.model = ''; state.provider = ''; state.task = ''; state.stage = ''; state.run++;
+      state.vps = {name:'', addr:'', connected:false}; state.remote = {name:'', paired:false}; state.model = ''; state.provider = ''; state.task = ''; state.stage = ''; state.run++;
       try { localStorage.removeItem('osc-gh'); } catch (er) {}
       $('#prompt').value = ''; $('#modelName').value = ''; view('home'); toast('Started over');
     }
