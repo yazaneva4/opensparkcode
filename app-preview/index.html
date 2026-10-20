@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="OpenSparkcode app prototype — switch between the phone and desktop layouts.">
+<title>OpenSparkcode app prototype</title>
+<link rel="icon" href="../favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#000;
+  --ink:#0c0c0e;
+  --panel:#121215;
+  --panel2:#1a1a1e;
+  --line:#2a2a2e;
+  --text:#f6f6f4;
+  --mute:#a4a4ad;
+  --faint:#6d6d76;
+  --spark:#ff6a00;
+  --add:#3fb873;
+  --del:#ef5b5b;
+  --display:"Chakra Petch","Eurostile",ui-sans-serif,system-ui,sans-serif;
+  --body:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --code:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--black);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--spark);outline-offset:2px;border-radius:6px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1}
+
+/* page bar */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px clamp(16px,3vw,32px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:18px}
+.brand img{width:34px;height:34px;border-radius:9px;object-fit:cover}
+.brand b{color:var(--spark)}
+.brand small{font-family:var(--body);font-weight:500;font-size:14px;color:var(--mute);margin-left:6px}
+.switch{display:inline-flex;padding:4px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
+.switch button{border:0;background:none;padding:8px 18px;border-radius:999px;font-weight:600;font-size:14px;color:var(--mute);display:flex;align-items:center;gap:8px}
+.switch button svg{width:16px;height:16px}
+.switch button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
+.bar-note{font-size:13px;color:var(--mute)}
+.bar-note a{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+
+.stagearea{display:flex;justify-content:center;align-items:flex-start;padding:32px 16px 48px;overflow:hidden}
+.scaler{transform-origin:top center}
+[hidden]{display:none!important}
+
+/* ---------- desktop frame ---------- */
+.desk{width:1200px;height:760px;border-radius:14px;border:1px solid #34343a;background:var(--ink);display:grid;grid-template-rows:40px 1fr;overflow:hidden;box-shadow:0 30px 80px rgba(255,106,0,.08)}
+.titlebar{display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--panel);border-bottom:1px solid var(--line);font-size:13px;color:var(--mute)}
+.lights{display:flex;gap:7px}.lights i{width:11px;height:11px;border-radius:50%;background:#3a3a40;display:block}
+.titlebar .ttl{flex:1;text-align:center;color:var(--text);font-weight:500}
+.desk-body{display:grid;grid-template-columns:260px 1fr 360px;min-height:0}
+.side{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
+.side-top{padding:14px}
+.newtask{width:100%;border:0;background:var(--spark);color:var(--ink);font-weight:600;padding:10px 12px;border-radius:10px;display:flex;align-items:center;gap:8px;justify-content:center}
+.side h3{font-family:var(--body);font-size:12px;font-weight:600;color:var(--faint);padding:10px 16px 6px}
+.sessions{list-style:none;margin:0;padding:0 8px;overflow:auto;flex:1}
+.sessions button{width:100%;text-align:left;border:0;background:none;padding:10px;border-radius:10px;display:grid;gap:2px}
+.sessions button:hover{background:var(--panel2)}
+.sessions button[aria-current="true"]{background:var(--panel2);box-shadow:inset 3px 0 0 var(--spark)}
+.sessions .s-title{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sessions .s-meta{font-size:12px;color:var(--mute);display:flex;gap:8px;align-items:center}
+.state{width:7px;height:7px;border-radius:50%;background:var(--faint);display:inline-block}
+.state.running{background:var(--spark);animation:pulse 1.4s ease-in-out infinite}
+.state.done{background:var(--add)}
+@keyframes pulse{50%{opacity:.35}}
+.side-foot{border-top:1px solid var(--line);padding:12px 16px;font-size:13px;color:var(--mute);display:flex;align-items:center;gap:10px}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--spark);color:var(--ink);display:grid;place-items:center;font-weight:700;font-size:13px}
+
+.main{display:flex;flex-direction:column;min-height:0;min-width:0}
+.main-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.main-head h2{font-size:18px;font-weight:600}
+.repo{font-size:12px;color:var(--mute);display:flex;gap:10px;align-items:center;margin-top:2px}
+.repo code{font-family:var(--code);font-size:11.5px;color:var(--text);background:var(--panel2);padding:2px 7px;border-radius:6px}
+.modechip{font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:4px 10px;display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.modechip i{width:7px;height:7px;border-radius:50%;background:var(--spark)}
+
+/* transcript (shared) */
+.log{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.msg{max-width:640px}
+.msg.user{align-self:flex-end;background:var(--panel2);border:1px solid var(--line);padding:10px 14px;border-radius:14px 14px 4px 14px}
+.msg.agent{display:flex;gap:10px}
+.msg.agent .who{width:26px;height:26px;border-radius:8px;background:var(--black);border:1px solid var(--line);display:grid;place-items:center;flex:none;margin-top:1px}
+.msg.agent .who svg{width:14px;height:14px}
+.msg.agent p{margin:0}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:6px;margin-left:36px}
+.steps li{font-size:13px;color:var(--mute);display:flex;gap:10px;align-items:center;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:7px 11px}
+.steps li code{font-family:var(--code);font-size:12px;color:var(--text)}
+.steps .ok{color:var(--add);font-weight:700}
+.steps .run{width:12px;height:12px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--spark);animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.changes-card{margin-left:36px;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;width:calc(100% - 36px);max-width:520px}
+.changes-card strong{display:block;font-size:14px}
+.changes-card span{font-size:12px;color:var(--mute)}
+.changes-card .open{font-size:13px;font-weight:600;color:var(--spark);white-space:nowrap}
+.sim{align-self:center;font-size:12px;color:var(--faint)}
+
+/* composer (shared) */
+.composer{border-top:1px solid var(--line);padding:12px 16px 14px}
+.composer form{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:10px 12px}
+.composer textarea{width:100%;border:0;background:none;resize:none;outline:none;min-height:42px;font-size:15px}
+.composer textarea::placeholder{color:var(--faint)}
+.comp-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.comp-row select{appearance:none;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:500}
+.send{margin-left:auto;border:0;background:var(--spark);color:var(--ink);width:34px;height:34px;border-radius:50%;display:grid;place-items:center}
+.send:disabled{background:var(--panel2);color:var(--faint);cursor:not-allowed}
+.send svg{width:16px;height:16px}
+
+/* changes panel */
+.diffpane{border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
+.diffpane-head{padding:14px 16px;border-bottom:1px solid var(--line)}
+.diffpane-head h3{font-size:15px}
+.diffpane-head p{margin:2px 0 0;font-size:12px;color:var(--mute)}
+.files{list-style:none;margin:0;padding:8px}
+.files button{width:100%;display:flex;justify-content:space-between;gap:8px;border:0;background:none;padding:7px 8px;border-radius:8px;font-family:var(--code);font-size:12px;text-align:left}
+.files button[aria-current="true"]{background:var(--panel2)}
+.files .n{white-space:nowrap}.files .a{color:var(--add)}.files .d{color:var(--del)}
+.diff{flex:1;overflow:auto;margin:0;padding:8px 0;font-family:var(--code);font-size:12px;line-height:1.65;border-top:1px solid var(--line)}
+.diff span{display:block;padding:0 14px;white-space:pre}
+.diff .add{background:rgba(63,184,115,.12);color:#b6ecc9}
+.diff .del{background:rgba(239,91,91,.12);color:#f5bcbc}
+.diff .hunk{color:var(--faint)}
+.diffpane-foot{border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:8px}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600}
+.btn.primary{background:var(--text);color:var(--ink);border-color:var(--text);flex:1}
+.empty{padding:24px 16px;color:var(--mute);font-size:13px}
+
+/* ---------- phone frame ---------- */
+.phone{width:392px;height:820px;border-radius:52px;border:10px solid #1d1d21;background:var(--ink);position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 0 1px #3a3a40,0 30px 80px rgba(255,106,0,.08)}
+.notch{position:absolute;top:10px;left:50%;width:110px;height:30px;margin-left:-55px;border-radius:20px;background:#000;z-index:5}
+.statusbar{height:50px;flex:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 28px 6px;font-size:14px;font-weight:600}
+.p-head{display:flex;align-items:center;gap:10px;padding:8px 14px 10px;border-bottom:1px solid var(--line)}
+.iconbtn{border:0;background:var(--panel2);width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none}
+.iconbtn svg{width:18px;height:18px}
+.p-head .t{flex:1;min-width:0}
+.p-head h2{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-head .repo{font-size:11.5px}
+.phone .log{padding:14px}
+.phone .msg{max-width:300px}
+.phone .steps{margin-left:0}
+.phone .changes-card{margin-left:0;width:100%}
+.phone .composer{padding:10px 12px 26px}
+.phone .comp-row select{font-size:12px;padding:5px 10px}
+.homebar{position:absolute;bottom:8px;left:50%;width:130px;height:5px;margin-left:-65px;border-radius:3px;background:#5a5a62}
+
+/* sheets */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:78%;background:var(--panel);border-radius:22px 22px 0 0;z-index:9;display:flex;flex-direction:column;border-top:1px solid var(--line);animation:up .25s cubic-bezier(.2,.8,.2,1)}
+.sheet.left{top:0;bottom:0;right:auto;width:82%;max-height:none;border-radius:0 22px 22px 0;padding-top:50px;animation:in .25s cubic-bezier(.2,.8,.2,1)}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:#4a4a52;margin:10px auto 4px}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 10px}
+.sheet-head h3{font-size:16px}
+.sheet .diff{border-top:1px solid var(--line)}
+@keyframes up{from{transform:translateY(100%)}}
+@keyframes in{from{transform:translateX(-100%)}}
+@media(prefers-reduced-motion:reduce){.sheet,.state.running,.steps .run{animation:none}}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <a class="brand" href="../"><img src="../assets/opensparkcode-logo.jpg" alt=""><span>Open<b>Spark</b>code</span><small>App prototype</small></a>
+  <div class="switch" role="group" aria-label="Prototype layout">
+    <button type="button" data-view="phone" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>Phone</button>
+    <button type="button" data-view="desktop" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Desktop</button>
+  </div>
+  <p class="bar-note">Clickable prototype. Replies are simulated and nothing connects to an agent.</p>
+</header>
+
+<div class="stagearea" id="stagearea">
+  <div class="scaler" id="scaler">
+
+    <!-- desktop -->
+    <div class="desk" id="desk" aria-label="Desktop app prototype">
+      <div class="titlebar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span class="ttl">OpenSparkcode</span><span id="d-host"></span></div>
+      <div class="desk-body">
+        <aside class="side">
+          <div class="side-top"><button class="newtask" type="button" data-action="new"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>New task</button></div>
+          <h3>Tasks</h3>
+          <ul class="sessions" id="d-sessions"></ul>
+          <div class="side-foot"><span class="avatar">Y</span><span>Your workspace</span></div>
+        </aside>
+        <section class="main">
+          <div class="main-head" id="d-head"></div>
+          <div class="log" id="d-log" aria-live="polite"></div>
+          <div class="composer" id="d-composer"></div>
+        </section>
+        <aside class="diffpane" id="d-diff"></aside>
+      </div>
+    </div>
+
+    <!-- phone -->
+    <div class="phone" id="phone" aria-label="Phone app prototype" hidden>
+      <div class="notch" aria-hidden="true"></div>
+      <div class="statusbar" aria-hidden="true"><span>9:41</span><span>5G</span></div>
+      <div class="p-head" id="p-head"></div>
+      <div class="log" id="p-log" aria-live="polite"></div>
+      <div class="composer" id="p-composer"></div>
+      <div id="p-overlay"></div>
+      <div class="homebar" aria-hidden="true"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SPARK = '<svg viewBox="0 0 24 24"><path fill="#ff6a00" d="M12 0c.7 6.3 2.9 9.4 12 12-9.1 2.6-11.3 5.7-12 12-.7-6.3-2.9-9.4-12-12C9.1 9.4 11.3 6.3 12 0Z"/></svg>';
+const MODES = {local:'Local', remote:'Remote', cloud:'Cloud', vps:'Cloud VPS'};
+const HOSTS = {local:'This computer', remote:'studio-mac', cloud:'Managed workspace', vps:'vps-fra-1'};
+const MODELS = ['Claude (Anthropic key)', 'GPT (OpenAI key)', 'Gemini (Google key)', 'OpenRouter'];
+
+const sessions = [
+  {id:1, title:'Fix login redirect loop', repo:'spark-web', branch:'spark/fix-login-redirect', mode:'remote', state:'done', when:'12m ago',
+   files:[
+     {path:'src/auth/redirect.ts', a:6, d:3, diff:[
+       ['hunk','@@ -12,9 +12,12 @@ export function nextUrl(req)'],
+       ['','  const target = req.query.next'],
+       ['del','  if (!target) return "/login"'],
+       ['add','  if (!target || target.startsWith("/login")) {'],
+       ['add','    return "/dashboard"'],
+       ['add','  }'],
+       ['','  if (!isSameOrigin(target)) {'],
+       ['del','    return "/login"'],
+       ['add','    return "/dashboard"'],
+       ['','  }'],
+       ['del','  return target'],
+       ['add','  return sanitize(target)'],
+       ['add','}'],
+     ]},
+     {path:'src/auth/redirect.test.ts', a:14, d:0, diff:[
+       ['hunk','@@ -0,0 +1,14 @@'],
+       ['add','import { nextUrl } from "./redirect"'],
+       ['add',''],
+       ['add','test("never sends you back to /login", () => {'],
+       ['add','  const req = { query: { next: "/login" } }'],
+       ['add','  expect(nextUrl(req)).toBe("/dashboard")'],
+       ['add','})'],
+     ]},
+   ],
+   log:[
+     {t:'user', text:'After signing in, the app keeps bouncing me back to /login. Can you find out why and fix it?'},
+     {t:'agent', text:'I\'ll look at how the sign-in redirect picks where to send you next.'},
+     {t:'steps', items:[['Read','src/auth/redirect.ts'],['Searched','"next=" in 4 files'],['Edited','src/auth/redirect.ts'],['Added','src/auth/redirect.test.ts'],['Ran tests','24 passed']]},
+     {t:'agent', text:'Fixed. When the next page was /login itself, the redirect pointed back to /login forever. It now sends you to the dashboard instead, and a new test covers it.'},
+     {t:'changes'},
+   ]},
+  {id:2, title:'Add dark mode toggle', repo:'spark-web', branch:'spark/dark-mode', mode:'cloud', state:'running', when:'now',
+   files:[{path:'src/ui/ThemeToggle.tsx', a:31, d:0, diff:[['hunk','@@ -0,0 +1,31 @@'],['add','export function ThemeToggle() {'],['add','  const [dark, setDark] = useTheme()'],['add','  return <Switch checked={dark} onChange={setDark} label="Dark mode" />'],['add','}']]}],
+   log:[
+     {t:'user', text:'Add a dark mode switch to the settings page.'},
+     {t:'agent', text:'Working on it in a cloud workspace on its own branch.'},
+     {t:'steps', items:[['Read','src/pages/Settings.tsx'],['Added','src/ui/ThemeToggle.tsx'],['Running','npm test', true]]},
+   ]},
+  {id:3, title:'Write tests for the CSV parser', repo:'data-tools', branch:'spark/csv-tests', mode:'vps', state:'idle', when:'yesterday',
+   files:[], log:[{t:'user', text:'Write tests for parseCsv, including quoted commas.'},{t:'agent', text:'Waiting for your Cloud VPS to come back online.'}]},
+];
+
+let current = 1, activeFile = 0, view = 'desktop', model = MODELS[0], sheet = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cur = () => sessions.find(s => s.id === current);
+const sum = s => s.files.reduce((a,f)=>[a[0]+f.a,a[1]+f.d],[0,0]);
+
+function sessionList(){
+  return sessions.map(s => `<li><button type="button" data-session="${s.id}" aria-current="${s.id===current}">
+    <span class="s-title">${esc(s.title)}</span>
+    <span class="s-meta"><i class="state ${s.state}"></i>${MODES[s.mode]}<span>${esc(s.when)}</span></span></button></li>`).join('');
+}
+function logHtml(s){
+  let h = s.log.map(m => {
+    if (m.t==='user') return `<div class="msg user">${esc(m.text)}</div>`;
+    if (m.t==='agent') return `<div class="msg agent"><span class="who" aria-hidden="true">${SPARK}</span><p>${esc(m.text)}</p></div>`;
+    if (m.t==='steps') return `<ul class="steps">${m.items.map(([v,o,run]) => `<li>${run?'<span class="run" aria-hidden="true"></span>':'<span class="ok" aria-hidden="true">✓</span>'}<span>${esc(v)}</span><code>${esc(o)}</code></li>`).join('')}</ul>`;
+    if (m.t==='changes'){const [a,d]=sum(s);return `<button type="button" class="changes-card" data-action="changes"><span><strong>${s.files.length} files changed</strong><span>+${a} −${d} on ${esc(s.branch)}</span></span><span class="open">Review</span></button>`;}
+    if (m.t==='sim') return `<div class="sim">Simulated reply</div>`;
+    return '';
+  }).join('');
+  return h;
+}
+function composerHtml(s){
+  const modes = Object.keys(MODES).filter(k => !(view==='phone' && k==='local'));
+  return `<form data-form>
+    <textarea aria-label="Message" rows="2" placeholder="Describe a task for the agent" data-input></textarea>
+    <div class="comp-row">
+      <select aria-label="Where the agent runs" data-mode>${modes.map(k=>`<option value="${k}" ${k===s.mode?'selected':''}>${MODES[k]}</option>`).join('')}</select>
+      <select aria-label="Model" data-model>${MODELS.map(m=>`<option ${m===model?'selected':''}>${esc(m)}</option>`).join('')}</select>
+      <button class="send" type="submit" aria-label="Send" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    </div></form>`;
+}
+function diffHtml(f){
+  return `<pre class="diff">${f.diff.map(([k,l]) => `<span class="${k}">${k==='add'?'+':k==='del'?'-':k==='hunk'?'':' '}${esc(l)}</span>`).join('')}</pre>`;
+}
+function filesHtml(s){
+  return `<ul class="files">${s.files.map((f,i)=>`<li><button type="button" data-file="${i}" aria-current="${i===activeFile}"><span>${esc(f.path)}</span><span class="n"><span class="a">+${f.a}</span> <span class="d">−${f.d}</span></span></button></li>`).join('')}</ul>`;
+}
+
+function renderDesktop(){
+  const s = cur();
+  $('d-host').textContent = HOSTS[s.mode];
+  $('d-sessions').innerHTML = sessionList();
+  $('d-head').innerHTML = `<div><h2>${esc(s.title)}</h2><div class="repo"><span>${esc(s.repo)}</span><code>${esc(s.branch)}</code></div></div><span class="modechip"><i></i>${MODES[s.mode]} on ${esc(HOSTS[s.mode])}</span>`;
+  $('d-log').innerHTML = logHtml(s);
+  $('d-composer').innerHTML = composerHtml(s);
+  const [a,d] = sum(s);
+  $('d-diff').innerHTML = s.files.length
+    ? `<div class="diffpane-head"><h3>Changes</h3><p>${s.files.length} files, +${a} −${d}, on ${esc(s.branch)}</p></div>${filesHtml(s)}${diffHtml(s.files[activeFile]||s.files[0])}
+       <div class="diffpane-foot"><button class="btn" type="button" data-action="discard">Discard</button><button class="btn primary" type="button" data-action="pr">Open pull request</button></div>`
+    : `<div class="diffpane-head"><h3>Changes</h3></div><p class="empty">No changes yet. Edits the agent makes will show up here.</p>`;
+  scrollLogs();
+}
+function renderPhone(){
+  const s = cur();
+  $('p-head').innerHTML = `<button class="iconbtn" type="button" data-action="menu" aria-label="Tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+    <div class="t"><h2>${esc(s.title)}</h2><div class="repo"><span class="modechip"><i></i>${MODES[s.mode]}</span><span>${esc(s.repo)}</span></div></div>
+    <button class="iconbtn" type="button" data-action="new" aria-label="New task"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></button>`;
+  $('p-log').innerHTML = logHtml(s);
+  $('p-composer').innerHTML = composerHtml(s);
+  let o = '';
+  if (sheet==='menu') o = `<div class="scrim" data-action="close"></div><div class="sheet left" role="dialog" aria-label="Tasks"><div class="sheet-head"><h3>Tasks</h3><button class="iconbtn" type="button" data-action="close" aria-label="Close">✕</button></div><ul class="sessions">${sessionList()}</ul></div>`;
+  if (sheet==='changes' && s.files.length) o = `<div class="scrim" data-action="close"></div><div class="sheet" role="dialog" aria-label="Changes"><div class="grab"></div><div class="sheet-head"><h3>Changes</h3><button class="iconbtn" type="button" data-action="close" aria-label="Close">✕</button></div>${filesHtml(s)}${diffHtml(s.files[activeFile]||s.files[0])}<div class="diffpane-foot"><button class="btn primary" type="button" data-action="pr">Open pull request</button></div></div>`;
+  $('p-overlay').innerHTML = o;
+  scrollLogs();
+}
+function render(){ view==='desktop' ? renderDesktop() : renderPhone(); }
+function scrollLogs(){ for (const id of ['d-log','p-log']){ const el=$(id); el.scrollTop = el.scrollHeight; } }
+
+function setView(v){
+  view = v;
+  if (v==='phone' && cur().mode==='local') cur().mode='remote';
+  document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view===v));
+  $('desk').hidden = v!=='desktop'; $('phone').hidden = v!=='phone';
+  sheet = null;
+  try { localStorage.setItem('osc-proto-view', v); } catch(e) {}
+  history.replaceState(null,'','#'+v);
+  render(); fit();
+}
+function fit(){
+  const frame = view==='desktop' ? $('desk') : $('phone');
+  const avail = $('stagearea').clientWidth - 32;
+  const w = frame.offsetWidth, h = frame.offsetHeight;
+  const k = Math.min(1, avail / w);
+  $('scaler').style.transform = `scale(${k})`;
+  $('scaler').style.height = (h*k)+'px';
+}
+
+function simulate(s, text){
+  s.log.push({t:'user', text});
+  s.state = 'running'; s.when = 'now';
+  const steps = {t:'steps', items:[['Reading','the project', true]]};
+  s.log.push(steps); render();
+  setTimeout(() => { steps.items = [['Read','the project'],['Planning','changes', true]]; render(); }, 900);
+  setTimeout(() => {
+    steps.items = [['Read','the project'],['Planned','changes']];
+    s.log.push({t:'agent', text:'This is a prototype, so I can\'t do the work yet. In the real app, I would make the changes on '+s.branch+' and show them here for you to review.'});
+    s.log.push({t:'sim'});
+    s.state = 'done'; render();
+  }, 2000);
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button,[data-action]'); if (!t) return;
+  if (t.dataset.view) return setView(t.dataset.view);
+  if (t.dataset.session){ current = +t.dataset.session; activeFile = 0; sheet = null; if (view==='phone' && cur().mode==='local') cur().mode='remote'; return render(); }
+  if (t.dataset.file){ activeFile = +t.dataset.file; return render(); }
+  const a = t.dataset.action;
+  if (a==='new'){ const id = Math.max(...sessions.map(s=>s.id))+1; sessions.unshift({id, title:'New task', repo:'spark-web', branch:'spark/task-'+id, mode: view==='phone'?'remote':'local', state:'idle', when:'now', files:[], log:[]}); current=id; activeFile=0; sheet=null; render(); const i=document.querySelector('[data-input]'); i&&i.focus(); }
+  if (a==='menu'){ sheet='menu'; render(); }
+  if (a==='changes'){ if (view==='phone'){ sheet='changes'; render(); } else { const p=$('d-diff').querySelector('.files button'); p&&p.focus(); } }
+  if (a==='close'){ sheet=null; render(); }
+  if (a==='pr' || a==='discard'){ t.textContent = a==='pr' ? 'Not available in the prototype' : 'Not available'; t.disabled = true; }
+});
+document.addEventListener('input', e => {
+  if (e.target.matches('[data-input]')) e.target.closest('form').querySelector('.send').disabled = !e.target.value.trim();
+});
+document.addEventListener('change', e => {
+  if (e.target.matches('[data-mode]')){ cur().mode = e.target.value; render(); }
+  if (e.target.matches('[data-model]')) model = e.target.value;
+});
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape' && sheet){ sheet=null; render(); }
+  if (e.key==='Enter' && !e.shiftKey && e.target.matches('[data-input]')){ e.preventDefault(); e.target.closest('form').requestSubmit(); }
+});
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  const input = e.target.querySelector('[data-input]'); const text = input.value.trim(); if (!text) return;
+  const s = cur(); if (s.title==='New task') s.title = text.length>40 ? text.slice(0,40)+'…' : text;
+  simulate(s, text);
+});
+window.addEventListener('resize', fit);
+
+let start = location.hash==='#phone' ? 'phone' : location.hash==='#desktop' ? 'desktop' : null;
+if (!start){ try { start = localStorage.getItem('osc-proto-view'); } catch(e) {} }
+if (!start) start = window.innerWidth < 700 ? 'phone' : 'desktop';
+setView(start);
+</script>
+</body>
+</html>
