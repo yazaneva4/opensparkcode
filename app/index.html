@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="OpenSparkcode app prototype — switch between the desktop and phone versions.">
+<title>OpenSparkcode app preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#000;
+  --ink:#0c0c0e;
+  --surface:#121215;
+  --tile:#1c1c20;
+  --line:#2a2a2e;
+  --text:#f6f6f4;
+  --mute:#a4a4ad;
+  --white:#fff;
+  --spark:#ff6a00;
+  --green:#7fd8a0;
+  --display:"Chakra Petch","Eurostile",ui-sans-serif,system-ui,sans-serif;
+  --body:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html{background:var(--black)}
+body{margin:0;background:var(--black);color:var(--text);font:16px/1.55 var(--body);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--spark);outline-offset:2px;border-radius:6px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.05}
+.hidden{display:none!important}
+
+/* ---------- page around the prototype ---------- */
+.wrap{width:min(1280px,calc(100% - 40px));margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;height:76px}
+.brand{display:flex;align-items:center;gap:12px;font:700 20px var(--display);color:var(--text);text-decoration:none}
+.brand img{width:42px;height:42px;border-radius:11px;object-fit:cover}
+.brand b{color:var(--spark)}
+.back{color:var(--mute);font-size:15px;text-decoration:none}
+.back:hover{color:var(--text);text-decoration:underline;text-underline-offset:4px}
+.intro{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:28px 0 24px}
+.intro h1{font-size:clamp(40px,6vw,72px);font-weight:700;letter-spacing:-.03em}
+.intro p{margin:12px 0 0;color:var(--mute);max-width:36em}
+.switch{display:inline-flex;padding:5px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.switch button{border:0;background:transparent;color:var(--mute);font-weight:600;font-size:15px;padding:10px 20px;border-radius:999px;display:flex;align-items:center;gap:8px}
+.switch button svg{width:18px;height:18px}
+.switch button[aria-pressed="true"]{background:var(--white);color:var(--ink)}
+.stage{position:relative;border-radius:28px;border:1px solid var(--line);background:#08080a radial-gradient(#ffffff10 .8px,transparent .8px) 0 0/20px 20px;padding:36px 20px;display:flex;justify-content:center;overflow:hidden}
+.scaler{transform-origin:top center}
+.note{color:var(--mute);font-size:14px;padding:18px 0 40px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* ---------- the device ---------- */
+.device{position:relative;background:var(--ink);color:var(--text);overflow:hidden;display:flex;flex-direction:column}
+.is-desktop{width:1200px;height:760px;border-radius:14px;border:1px solid #34343a;box-shadow:0 30px 90px #0009}
+.is-phone{width:390px;height:800px;border-radius:52px;border:10px solid #1f1f23;box-shadow:0 0 0 2px #3a3a40,0 30px 90px #0009}
+
+/* chrome */
+.titlebar{height:44px;flex:none;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--line);background:#0f0f12;font-size:13px;color:var(--mute)}
+.lights{display:flex;gap:7px}.lights i{width:11px;height:11px;border-radius:50%;background:#3a3a40}
+.lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+.titlebar .title{flex:1;text-align:center;margin-right:60px}
+.statusbar{height:48px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 28px 0;font-weight:600;font-size:15px}
+.island{width:110px;height:32px;border-radius:20px;background:#000}
+.statusbar .icons{display:flex;gap:6px;align-items:center}
+.statusbar .icons svg{width:18px;height:18px}
+.is-desktop .statusbar,.is-phone .titlebar{display:none}
+
+.body{flex:1;min-height:0;display:flex}
+.sidebar{width:220px;flex:none;border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:4px;background:#0f0f12}
+.side-brand{display:flex;align-items:center;gap:10px;font:700 17px var(--display);padding:4px 8px 16px}
+.side-brand b{color:var(--spark)}
+.navbtn{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:var(--mute);text-align:left;padding:10px 12px;border-radius:10px;font-size:15px;font-weight:500}
+.navbtn svg{width:18px;height:18px;flex:none}
+.navbtn:hover{color:var(--text);background:#ffffff08}
+.navbtn[aria-current="page"]{color:var(--text);background:var(--tile)}
+.side-group{margin-top:18px;font-size:13px;color:var(--mute);padding:0 12px 6px}
+.side-proj{font-size:14px}
+.side-foot{margin-top:auto;padding:14px;border-radius:14px;background:var(--tile);font-size:13px;color:var(--mute)}
+.side-foot strong{display:block;color:var(--text);font-size:14px}
+.main{flex:1;min-width:0;overflow:auto;padding:28px 36px}
+.inspector{width:270px;flex:none;border-left:1px solid var(--line);padding:24px 20px;overflow:auto;background:#0f0f12}
+.tabbar{display:none}
+.is-phone .sidebar,.is-phone .inspector{display:none}
+.is-phone .main{padding:12px 20px 24px}
+.is-phone .tabbar{display:grid;grid-template-columns:repeat(4,1fr);flex:none;border-top:1px solid var(--line);padding:8px 8px 26px;background:#0f0f12}
+.tabbar .navbtn{flex-direction:column;gap:3px;font-size:12px;padding:6px 0;align-items:center;justify-content:center}
+.tabbar .navbtn[aria-current="page"]{background:transparent;color:var(--spark)}
+
+/* app content */
+.where{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:14px;color:var(--mute)}
+.where strong{color:var(--text);font-weight:600}
+.where .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:8px}
+.linkbtn{border:0;background:transparent;color:var(--spark);font-weight:600;padding:4px 2px;font-size:14px}
+.greet{font-size:44px;font-weight:700;letter-spacing:-.03em;margin:26px 0 8px}
+.is-phone .greet{font-size:34px;margin-top:18px}
+.sub{color:var(--mute);margin:0 0 22px}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modecard{border-radius:18px;padding:18px;text-align:left;border:2px solid transparent;min-height:132px;display:flex;flex-direction:column}
+.modecard strong{font:700 22px/1.1 var(--display);letter-spacing:-.01em}
+.modecard span{font-size:14px;margin-top:6px}
+.modecard em{font-style:normal;margin-top:auto;padding-top:14px;font-size:13px;font-weight:600}
+.modecard.local{background:var(--white);color:var(--ink)}
+.modecard.local span{color:#55555d}
+.modecard.cloud{background:var(--spark);color:var(--ink)}
+.modecard.cloud span{color:#3d1b00}
+.modecard[aria-pressed="true"]{border-color:var(--text);box-shadow:0 0 0 3px var(--black),0 0 0 5px var(--text)}
+.is-phone .modecard{min-height:120px;padding:14px}
+.is-phone .modecard strong{font-size:18px}
+.composer{margin-top:20px;border-radius:18px;background:var(--surface);border:1px solid var(--line);padding:16px}
+.composer textarea{width:100%;min-height:84px;resize:none;border:0;background:transparent;outline:0;font-size:17px}
+.composer textarea::placeholder{color:#7d7d86}
+.composer-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+.chipbtn{border:1px solid var(--line);background:var(--tile);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
+.chipbtn .star{width:12px;height:12px;color:var(--spark)}
+.primary{border:0;background:var(--spark);color:var(--ink);font-weight:700;padding:11px 20px;border-radius:12px;font-size:15px}
+.primary:hover{background:#ff8124}
+.primary:disabled{opacity:.4;cursor:default}
+.secondary{border:1px solid #3a3a40;background:var(--tile);font-weight:600;padding:11px 20px;border-radius:12px;font-size:15px}
+.section-h{display:flex;justify-content:space-between;align-items:center;margin:28px 0 10px}
+.section-h h2{font-size:20px;font-weight:600}
+.item{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.item:hover{border-color:#3a3a40}
+.item .ic{width:40px;height:40px;border-radius:11px;background:var(--tile);display:grid;place-items:center;flex:none;color:var(--spark)}
+.item .ic svg{width:20px;height:20px}
+.item strong{display:block;font-weight:600}
+.item small{color:var(--mute);font-size:13px}
+.item .grow{flex:1;min-width:0}
+.empty{color:var(--mute);text-align:center;padding:40px 10px}
+.h-page{font-size:30px;font-weight:700;letter-spacing:-.02em;margin:18px 0 6px}
+
+/* task flow */
+.stepper{display:flex;gap:6px;margin:18px 0 6px}
+.stepper span{flex:1;height:5px;border-radius:5px;background:var(--line)}
+.stepper span.on{background:var(--spark)}
+.stage-label{font-size:14px;color:var(--mute)}
+.task-title{font-size:26px;font-weight:600;line-height:1.2;margin:8px 0 14px}
+.meta{font-size:13px;color:var(--mute);padding:10px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.plan{list-style:none;padding:0;margin:16px 0;counter-reset:s}
+.plan li{counter-increment:s;padding:12px 0 12px 40px;position:relative;border-bottom:1px solid var(--line)}
+.plan li:before{content:counter(s);position:absolute;left:0;top:11px;width:26px;height:26px;border-radius:50%;background:var(--tile);display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--spark)}
+.plan li.done:before{content:"";background:var(--spark) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m5 12 5 5 9-10' stroke='%230c0c0e' stroke-width='3' fill='none'/%3E%3C/svg%3E") center/14px no-repeat}
+.plan li.now{color:var(--text)}
+.plan li.wait{color:var(--mute)}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.actions button{flex:1}
+.diff{font:13px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace;background:#08080a;border:1px solid var(--line);border-radius:14px;padding:14px;overflow:auto;white-space:pre}
+.diff .a{color:var(--green)}.diff .r{color:#f2998f}.diff .c{color:#6d6d76}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.stats div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--mute)}
+.stats strong{display:block;color:var(--text);font-size:20px;font-family:var(--display)}
+
+/* inspector */
+.inspector h3{font-size:16px;font-weight:600;margin-bottom:12px}
+.kv{padding:12px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--mute)}
+.kv strong{display:block;color:var(--text);font-size:15px;font-weight:600;margin-top:2px}
+
+/* sheets (in-device dialogs) */
+.scrim{position:absolute;inset:0;background:#000a;backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:5;padding:20px}
+.sheet{width:min(480px,100%);max-height:100%;overflow:auto;background:#151518;border:1px solid #34343a;border-radius:22px;padding:22px}
+.is-phone .scrim{align-items:flex-end;padding:0}
+.is-phone .sheet{border-radius:26px 26px 0 0;padding-bottom:34px}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet h2{font-size:24px;font-weight:700}
+.sheet p{color:var(--mute);font-size:14px;margin:8px 0 14px}
+.x{border:0;background:var(--tile);width:36px;height:36px;border-radius:50%;font-size:20px;line-height:1}
+.opt{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.opt[aria-checked="true"]{border-color:var(--spark);background:#ff6a0012}
+.opt .ic{width:36px;height:36px;border-radius:10px;background:var(--tile);display:grid;place-items:center;flex:none;color:var(--spark)}
+.opt .ic svg{width:18px;height:18px}
+.opt strong{display:block;font-weight:600}
+.opt small{color:var(--mute);font-size:13px}
+.opt .radio{margin-left:auto;width:18px;height:18px;border-radius:50%;border:2px solid #55555d;flex:none}
+.opt[aria-checked="true"] .radio{border:6px solid var(--spark)}
+label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
+.field{width:100%;background:#08080a;border:1px solid #34343a;border-radius:10px;padding:11px 12px;font-size:15px}
+.sheet .primary{width:100%;margin-top:18px}
+.hint{font-size:13px;color:var(--mute);margin-top:10px}
+
+.toast{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:var(--white);color:var(--ink);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;z-index:6;white-space:nowrap;box-shadow:0 10px 40px #000a}
+.is-phone .toast{bottom:100px}
+
+@media(max-width:700px){
+  .wrap{width:calc(100% - 32px)}
+  .top{height:64px}
+  .back{display:none}
+  .stage{padding:20px 8px;border-radius:20px}
+  .switch{width:100%}
+  .switch button{flex:1;justify-content:center}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-star" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0c.7 6.3 2.9 9.4 12 12-9.1 2.6-11.3 5.7-12 12-.7-6.3-2.9-9.4-12-12C9.1 9.4 11.3 6.3 12 0Z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9h-6v-6H9v6H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2 19h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 18.5h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13" width="18" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="7" cy="7.5" r="1" fill="currentColor"/><circle cx="7" cy="16.5" r="1" fill="currentColor"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18h10.5a4.5 4.5 0 0 0 .4-9A6 6 0 0 0 6.3 10.2 4 4 0 0 0 7 18Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-branch" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="19" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 7v10M18 10c0 4-6 3-12 7" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="https://opensparkcode.vercel.app/" aria-label="OpenSparkcode home"><img src="https://opensparkcode.vercel.app/assets/opensparkcode-logo.jpg" alt=""><span>Open<b>Spark</b>code</span></a>
+    <a class="back" href="https://opensparkcode.vercel.app/">Back to the website</a>
+  </header>
+
+  <section class="intro">
+    <div>
+      <h1>App preview</h1>
+      <p>Try the OpenSparkcode app on a computer or a phone. Everything here is a clickable prototype: no agent, repository, or model is connected.</p>
+    </div>
+    <div class="switch" role="group" aria-label="Choose prototype">
+      <button type="button" data-device="desktop" aria-pressed="true"><svg><use href="#i-laptop"/></svg>Desktop</button>
+      <button type="button" data-device="phone" aria-pressed="false"><svg><use href="#i-phone"/></svg>Phone</button>
+    </div>
+  </section>
+
+  <div class="stage" id="stage">
+    <div class="scaler" id="scaler">
+      <div class="device is-desktop" id="device" aria-label="OpenSparkcode desktop prototype">
+
+        <div class="titlebar"><span class="lights"><i></i><i></i><i></i></span><span class="title">OpenSparkcode</span></div>
+        <div class="statusbar"><span>9:41</span><span class="island"></span><span class="icons"><svg viewBox="0 0 24 24"><path d="M3 18h3v-4H3zm5 0h3v-7H8zm5 0h3V8h-3zm5 0h3V5h-3z" fill="currentColor"/></svg><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="4" y="9" width="12" height="6" rx="1" fill="currentColor"/></svg></span></div>
+
+        <div class="body">
+          <aside class="sidebar">
+            <div class="side-brand"><svg width="18" height="18" style="color:var(--spark)"><use href="#i-star"/></svg><span>Open<b>Spark</b>code</span></div>
+            <button class="navbtn" data-view="home" aria-current="page"><svg><use href="#i-home"/></svg>Home</button>
+            <button class="navbtn" data-view="sessions"><svg><use href="#i-clock"/></svg>Sessions</button>
+            <button class="navbtn" data-view="projects"><svg><use href="#i-folder"/></svg>Projects</button>
+            <button class="navbtn" data-view="settings"><svg><use href="#i-gear"/></svg>Settings</button>
+            <div class="side-group">Projects</div>
+            <div id="sideProjects"></div>
+            <div class="side-foot"><strong id="sideWhere">This computer</strong>Where the agent runs</div>
+          </aside>
+
+          <main class="main" id="main">
+            <!-- home -->
+            <section data-page="home">
+              <div class="where"><span><span class="dot"></span>Runs on <strong class="whereLabel">This computer</strong></span><button class="linkbtn" data-open="where">Change</button></div>
+              <h2 class="greet">What are we building?</h2>
+              <p class="sub">Pick where the work happens, then describe the task.</p>
+              <div class="modes">
+                <button class="modecard local" data-group="machines" aria-pressed="true"><strong>Your machine</strong><span id="localDesc">This computer, a remote one, or your VPS</span><em>Local and remote</em></button>
+                <button class="modecard cloud" data-group="cloud" aria-pressed="false"><strong>In the cloud</strong><span>A managed workspace on its own branch</span><em>Cloud</em></button>
+              </div>
+              <form class="composer" id="composer">
+                <textarea id="prompt" aria-label="Describe your task" placeholder="Describe a task, like “Add a dark mode toggle”"></textarea>
+                <div class="composer-row">
+                  <button type="button" class="chipbtn" data-open="model"><svg class="star"><use href="#i-star"/></svg><span id="modelLabel">Choose a model</span></button>
+                  <button class="primary" type="submit">Plan task</button>
+                </div>
+              </form>
+              <div class="section-h"><h2>Jump back in</h2><button class="linkbtn" data-view="projects">All projects</button></div>
+              <div id="homeProjects"></div>
+            </section>
+
+            <!-- sessions -->
+            <section data-page="sessions" class="hidden">
+              <h2 class="h-page">Sessions</h2>
+              <p class="sub">Tasks you plan show up here.</p>
+              <div id="sessionList"></div>
+            </section>
+
+            <!-- projects -->
+            <section data-page="projects" class="hidden">
+              <div class="section-h" style="margin-top:18px"><h2 class="h-page" style="margin:0">Projects</h2><button class="linkbtn" data-open="project">New project</button></div>
+              <p class="sub">Sample projects. No GitHub account or folders are connected.</p>
+              <div id="projectList"></div>
+            </section>
+
+            <!-- settings -->
+            <section data-page="settings" class="hidden">
+              <h2 class="h-page">Settings</h2>
+              <p class="sub">Your setup for this prototype.</p>
+              <button class="item" data-open="where"><span class="ic"><svg><use href="#i-link"/></svg></span><span class="grow"><strong>Where the agent runs</strong><small class="whereLabel">This computer</small></span></button>
+              <button class="item" data-open="model"><span class="ic"><svg><use href="#i-star"/></svg></span><span class="grow"><strong>Model</strong><small id="settingsModel">Not chosen yet</small></span></button>
+              <button class="item" data-action="reset"><span class="ic"><svg><use href="#i-clock"/></svg></span><span class="grow"><strong>Reset the prototype</strong><small>Clear tasks, projects, and choices</small></span></button>
+            </section>
+
+            <!-- task -->
+            <section data-page="task" class="hidden">
+              <button class="linkbtn" data-view="home">Back to home</button>
+              <div class="stepper"><span id="s1"></span><span id="s2"></span><span id="s3"></span></div>
+              <div class="stage-label" id="stageLabel">Plan ready for review</div>
+              <h2 class="task-title" id="taskTitle"></h2>
+              <div class="meta" id="taskMeta"></div>
+              <ol class="plan" id="plan">
+                <li>Read the project and find the files involved</li>
+                <li>Make the change on a new branch</li>
+                <li>Run checks and prepare the changes for review</li>
+              </ol>
+              <div class="actions" id="planActions"><button class="primary" id="run">Approve and run</button></div>
+              <div class="actions hidden" id="runActions"><button class="secondary" id="stop">Stop</button></div>
+              <div id="review" class="hidden">
+                <div class="stats"><div><strong>+12 −3</strong>Sample changes</div><div><strong style="color:var(--green)">3 passed</strong>Sample checks</div></div>
+                <div class="diff" id="diff"></div>
+                <div class="actions"><button class="secondary" id="discard">Discard</button><button class="primary" id="accept">Accept changes</button></div>
+                <p class="hint" id="reviewNote">This is a sample diff. Accepting only updates the prototype.</p>
+              </div>
+            </section>
+          </main>
+
+          <aside class="inspector">
+            <h3>This task</h3>
+            <div class="kv">Runs on<strong class="whereLabel">This computer</strong></div>
+            <div class="kv">Project<strong id="inspProject">opensparkcode</strong></div>
+            <div class="kv">Model<strong id="inspModel">Not chosen yet</strong></div>
+            <div class="kv">Changes<strong>You review before anything is kept</strong></div>
+          </aside>
+        </div>
+
+        <nav class="tabbar" aria-label="App">
+          <button class="navbtn" data-view="home" aria-current="page"><svg><use href="#i-home"/></svg>Home</button>
+          <button class="navbtn" data-view="sessions"><svg><use href="#i-clock"/></svg>Sessions</button>
+          <button class="navbtn" data-view="projects"><svg><use href="#i-folder"/></svg>Projects</button>
+          <button class="navbtn" data-view="settings"><svg><use href="#i-gear"/></svg>Settings</button>
+        </nav>
+
+        <!-- sheet: where -->
+        <div class="scrim hidden" data-sheet="where" role="dialog" aria-modal="true" aria-labelledby="whereH">
+          <div class="sheet">
+            <div class="sheet-h"><h2 id="whereH">Where should the agent run?</h2><button class="x" data-close aria-label="Close">×</button></div>
+            <p id="whereIntro">Run on this computer, control another machine, or use the cloud.</p>
+            <div id="whereOpts" role="radiogroup" aria-labelledby="whereH"></div>
+            <div id="hostField" class="hidden"><label class="f" for="hostName">Name for this machine</label><input class="field" id="hostName" maxlength="40" placeholder="My Linux server"></div>
+            <button class="primary" id="saveWhere">Use this setup</button>
+            <p class="hint">Nothing connects in the prototype.</p>
+          </div>
+        </div>
+        <!-- sheet: model -->
+        <div class="scrim hidden" data-sheet="model" role="dialog" aria-modal="true" aria-labelledby="modelH">
+          <div class="sheet">
+            <div class="sheet-h"><h2 id="modelH">Choose a model</h2><button class="x" data-close aria-label="Close">×</button></div>
+            <p>In the real app you connect your own API key. The prototype never asks for one.</p>
+            <label class="f" for="provider">Provider</label>
+            <select class="field" id="provider"><option>OpenAI</option><option>Anthropic</option><option>Google</option><option>OpenRouter</option></select>
+            <label class="f" for="modelName">Model name</label>
+            <input class="field" id="modelName" maxlength="60" placeholder="Type the model you want to use">
+            <button class="primary" id="saveModel">Use this model</button>
+          </div>
+        </div>
+        <!-- sheet: project -->
+        <div class="scrim hidden" data-sheet="project" role="dialog" aria-modal="true" aria-labelledby="projH">
+          <div class="sheet">
+            <div class="sheet-h"><h2 id="projH">New project</h2><button class="x" data-close aria-label="Close">×</button></div>
+            <label class="f" for="projName">Project name</label>
+            <input class="field" id="projName" maxlength="40" placeholder="my-next-idea">
+            <button class="primary" id="saveProject">Create project</button>
+          </div>
+        </div>
+
+        <div class="toast hidden" id="toast" role="status"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><span>Prototype only. Taps and clicks are simulated.</span><span>Desktop runs local, remote, or cloud. Phone controls remote or cloud.</span></div>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  const device = $('#device'), stage = $('#stage'), scaler = $('#scaler');
+
+  const HOSTS = {
+    local:  {title:'This computer', icon:'laptop', desc:'The agent works in folders you choose here.', desktopOnly:true},
+    remote: {title:'Another computer', icon:'link', desc:'Control a computer you own from this device.'},
+    vps:    {title:'Your VPS', icon:'server', desc:'A Linux server you manage runs the agent.'},
+    cloud:  {title:'Managed cloud', icon:'cloud', desc:'A hosted workspace that works on its own branch.'}
+  };
+  const state = {kind:'desktop', host:'local', hostName:'', pending:'local', provider:'', model:'', projects:['opensparkcode','sparkcode-docs'], project:'opensparkcode', task:'', stage:'', run:0};
+
+  /* ----- device switch ----- */
+  function setDevice(kind){
+    state.kind = kind;
+    device.classList.toggle('is-desktop', kind === 'desktop');
+    device.classList.toggle('is-phone', kind === 'phone');
+    device.setAttribute('aria-label', 'OpenSparkcode ' + kind + ' prototype');
+    $$('[data-device]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.device === kind)));
+    if (kind === 'phone' && state.host === 'local') state.host = 'cloud';
+    $('#localDesc').textContent = kind === 'phone' ? 'Control another computer or your VPS' : 'This computer, a remote one, or your VPS';
+    try { localStorage.setItem('osc-device', kind); } catch (e) {}
+    closeSheets(); render(); fit();
+  }
+  function fit(){
+    const w = device.offsetWidth, h = device.offsetHeight;
+    const avail = stage.clientWidth - parseFloat(getComputedStyle(stage).paddingLeft) * 2;
+    const s = Math.min(1, avail / w);
+    scaler.style.transform = s < 1 ? `scale(${s})` : '';
+    scaler.style.height = s < 1 ? (h * s) + 'px' : '';
+  }
+  $$('[data-device]').forEach(b => b.addEventListener('click', () => setDevice(b.dataset.device)));
+  addEventListener('resize', fit);
+
+  /* ----- views ----- */
+  function view(name){
+    $$('[data-page]').forEach(p => p.classList.toggle('hidden', p.dataset.page !== name));
+    $$('.navbtn[data-view]').forEach(b => b.dataset.view === name ? b.setAttribute('aria-current','page') : b.removeAttribute('aria-current'));
+    $('#main').scrollTop = 0;
+    render();
+  }
+
+  function hostLabel(){
+    const t = HOSTS[state.host].title;
+    return state.hostName && (state.host === 'remote' || state.host === 'vps') ? `${t} (${state.hostName})` : t;
+  }
+  function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function icon(name){ const s = document.createElementNS('http://www.w3.org/2000/svg','svg'); const u = document.createElementNS('http://www.w3.org/2000/svg','use'); u.setAttribute('href','#i-'+name); s.append(u); return s; }
+  function item(iconName, title, sub, onClick){
+    const b = el('button','item'); const ic = el('span','ic'); ic.append(icon(iconName));
+    const g = el('span','grow'); g.append(el('strong',null,title), el('small',null,sub));
+    b.append(ic,g); b.type='button'; b.addEventListener('click', onClick); return b;
+  }
+
+  function render(){
+    $$('.whereLabel').forEach(e => e.textContent = hostLabel());
+    $('#sideWhere').textContent = hostLabel();
+    const isCloud = state.host === 'cloud';
+    $$('.modecard').forEach(c => c.setAttribute('aria-pressed', String((c.dataset.group === 'cloud') === isCloud)));
+    const m = state.model ? `${state.provider} · ${state.model}` : 'Not chosen yet';
+    $('#modelLabel').textContent = state.model ? (state.model.length > 22 ? state.model.slice(0,22) + '…' : state.model) : 'Choose a model';
+    $('#settingsModel').textContent = m; $('#inspModel').textContent = m; $('#inspProject').textContent = state.project;
+
+    const side = $('#sideProjects'); side.replaceChildren();
+    state.projects.forEach(p => { const b = el('button','navbtn side-proj'); b.type='button'; b.append(icon('folder'), document.createTextNode(p)); b.addEventListener('click', () => pickProject(p)); side.append(b); });
+
+    const hp = $('#homeProjects'); hp.replaceChildren();
+    state.projects.slice(0,2).forEach(p => hp.append(item('branch', p, `yazaneva4/${p} · main`, () => pickProject(p))));
+
+    const pl = $('#projectList'); pl.replaceChildren();
+    state.projects.forEach(p => pl.append(item('folder', p, `${hostLabel()} · sample project`, () => pickProject(p))));
+
+    const sl = $('#sessionList'); sl.replaceChildren();
+    if (!state.task) { const e = el('div','empty','No sessions yet. Plan a task from Home to see one here.'); sl.append(e); }
+    else sl.append(item('clock', state.task, `${state.stage} · ${state.project}`, () => view('task')));
+  }
+
+  function pickProject(p){ state.project = p; view('home'); $('#prompt').value = `Improve the layout of ${p} on small screens`; toast(`Project: ${p}`); }
+
+  /* ----- sheets ----- */
+  function openSheet(name){
+    closeSheets();
+    if (name === 'where') buildWhere();
+    const s = $(`[data-sheet="${name}"]`); s.classList.remove('hidden');
+    const f = s.querySelector('input,select,button[aria-checked="true"],button'); if (f) f.focus();
+  }
+  function closeSheets(){ $$('[data-sheet]').forEach(s => s.classList.add('hidden')); }
+  function buildWhere(group){
+    const ids = Object.keys(HOSTS).filter(k => !(state.kind === 'phone' && HOSTS[k].desktopOnly));
+    if (!group) state.pending = state.host;
+    $('#whereIntro').textContent = state.kind === 'phone'
+      ? 'Your phone is the remote control. Pick the machine or cloud workspace that does the work.'
+      : 'Run on this computer, control another machine, or use the cloud.';
+    const box = $('#whereOpts'); box.replaceChildren();
+    ids.forEach(id => {
+      const h = HOSTS[id], b = el('button','opt'); b.type='button'; b.setAttribute('role','radio'); b.setAttribute('aria-checked', String(id === state.pending));
+      const ic = el('span','ic'); ic.append(icon(h.icon)); const g = el('span'); g.append(el('strong',null,h.title), el('small',null,h.desc));
+      b.append(ic, g, el('span','radio')); b.addEventListener('click', () => { state.pending = id; buildWhere(true); }); box.append(b);
+    });
+    $('#hostField').classList.toggle('hidden', !(state.pending === 'remote' || state.pending === 'vps'));
+  }
+  $('#saveWhere').addEventListener('click', () => {
+    state.host = state.pending; state.hostName = $('#hostName').value.trim();
+    closeSheets(); render(); toast(`Runs on: ${hostLabel()}`);
+  });
+  $('#saveModel').addEventListener('click', () => {
+    const v = $('#modelName').value.trim();
+    if (!v) { $('#modelName').focus(); toast('Type a model name first'); return; }
+    state.model = v; state.provider = $('#provider').value; closeSheets(); render(); toast('Model chosen');
+  });
+  $('#saveProject').addEventListener('click', () => {
+    const v = $('#projName').value.trim();
+    if (!v) { $('#projName').focus(); return; }
+    if (!state.projects.includes(v)) state.projects.push(v);
+    state.project = v; $('#projName').value = ''; closeSheets(); view('projects'); toast('Project created');
+  });
+
+  /* ----- task flow ----- */
+  const steps = () => $$('#plan li');
+  function setStage(n, label){
+    ['#s1','#s2','#s3'].forEach((s,i) => $(s).classList.toggle('on', i < n));
+    $('#stageLabel').textContent = label; state.stage = label;
+  }
+  $('#composer').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = $('#prompt').value.trim();
+    if (!v) { $('#prompt').focus(); toast('Describe the task first'); return; }
+    if (!state.model) { openSheet('model'); toast('Choose a model to plan the task'); return; }
+    state.run++; state.task = v;
+    $('#taskTitle').textContent = v;
+    $('#taskMeta').textContent = `${state.project} · ${hostLabel()} · ${state.provider} ${state.model} · branch spark/task-1`;
+    steps().forEach(li => li.className = 'wait');
+    $('#planActions').classList.remove('hidden'); $('#runActions').classList.add('hidden'); $('#review').classList.add('hidden');
+    setStage(1, 'Plan ready for review'); view('task');
+  });
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  $('#run').addEventListener('click', async () => {
+    const token = ++state.run;
+    $('#planActions').classList.add('hidden'); $('#runActions').classList.remove('hidden');
+    setStage(2, 'Running (simulated)');
+    const li = steps();
+    for (let i = 0; i < li.length; i++) {
+      li[i].className = 'now'; await wait(900);
+      if (token !== state.run) return;
+      li[i].className = 'done';
+    }
+    $('#runActions').classList.add('hidden'); $('#review').classList.remove('hidden');
+    $('#accept').disabled = $('#discard').disabled = false;
+    $('#reviewNote').textContent = 'This is a sample diff. Accepting only updates the prototype.';
+    setStage(3, 'Ready for your review'); showDiff();
+  });
+  $('#stop').addEventListener('click', () => {
+    state.run++; steps().forEach(li => li.className = 'wait');
+    $('#runActions').classList.add('hidden'); $('#planActions').classList.remove('hidden');
+    setStage(1, 'Stopped. You can run the plan again.');
+  });
+  function showDiff(){
+    const lines = [['c','// App.tsx (sample)'],['r','- <button>Continue</button>'],['a','+ <button className="spark-action">'],['a','+   Start building'],['a','+ </button>'],['c',''],['c','/* app.css (sample) */'],['a','+ .spark-action { background: #ff6a00; min-height: 44px; }']];
+    const d = $('#diff'); d.replaceChildren();
+    lines.forEach(([c,t]) => { d.append(el('span', c, t), document.createTextNode('\n')); });
+  }
+  [['#accept','Accepted','Changes accepted in the prototype. No repository was changed.'],['#discard','Discarded','Changes discarded.']].forEach(([id,label,note]) => {
+    $(id).addEventListener('click', () => { setStage(3, label); $('#reviewNote').textContent = note; $('#accept').disabled = $('#discard').disabled = true; toast(label); });
+  });
+
+  /* ----- global clicks ----- */
+  document.addEventListener('click', e => {
+    const v = e.target.closest('[data-view]'); if (v) view(v.dataset.view);
+    const o = e.target.closest('[data-open]'); if (o) openSheet(o.dataset.open);
+    if (e.target.closest('[data-close]') || e.target.classList.contains('scrim')) closeSheets();
+    const g = e.target.closest('[data-group]');
+    if (g) {
+      openSheet('where');
+      state.pending = g.dataset.group === 'cloud' ? 'cloud' : (state.kind === 'phone' ? 'remote' : 'local');
+      if (g.dataset.group !== 'cloud' && state.host !== 'cloud') state.pending = state.host;
+      buildWhere(true);
+    }
+    if (e.target.closest('[data-action="reset"]')) {
+      Object.assign(state, {host: state.kind === 'phone' ? 'cloud' : 'local', hostName:'', model:'', provider:'', projects:['opensparkcode','sparkcode-docs'], project:'opensparkcode', task:'', stage:''});
+      state.run++; $('#prompt').value=''; $('#modelName').value=''; $('#hostName').value=''; view('home'); toast('Prototype reset');
+    }
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
+
+  let t;
+  function toast(msg){ const el = $('#toast'); el.textContent = msg; el.classList.remove('hidden'); clearTimeout(t); t = setTimeout(() => el.classList.add('hidden'), 2600); }
+
+  let start = matchMedia('(max-width:700px)').matches ? 'phone' : 'desktop';
+  try { const s = localStorage.getItem('osc-device'); if (s === 'phone' || s === 'desktop') start = s; } catch (e) {}
+  setDevice(start);
+})();
+</script>
+</body>
+</html>
