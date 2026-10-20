@@ -301,7 +301,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
                 <p class="sub">First, pick where the agent runs.</p>
                 <div class="modes">
                   <button class="modecard local" data-mode="machine"><strong>Your machine</strong><span>This computer, or a cloud VPS you manage</span><em>Set up</em></button>
-                  <button class="modecard cloud" data-mode="cloud"><strong>In the cloud</strong><span>A managed workspace that works on a new branch of your GitHub repo</span><em>Set up</em></button>
+                  <button class="modecard cloud" data-mode="cloud"><strong>In the cloud</strong><span>A managed workspace that works on new branches of your GitHub repos</span><em>Set up</em></button>
                 </div>
               </div>
               <div id="homeReady" class="hidden">
@@ -638,7 +638,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
           h('div',{class:'navrow'}, back(backHome), h('button',{type:'button', class:'primary', onclick:() => goStep('repo')}, 'Continue')),
           h('p',{class:'hint'}, h('button',{type:'button', class:'dangerlink', onclick:() => disconnectGithub() || goStep('gh')}, 'Disconnect GitHub')));
       } else {
-        body.append(h('div',{class:'ready-card'}, h('strong',null,'What this does'), h('small',null,'Lets the agent see the repositories you pick and push to a new branch. Your main branch is never changed.')),
+        body.append(h('div',{class:'ready-card'}, h('strong',null,'What this does'), h('small',null,'Lets the agent see the repositories you pick and push to a new branch in each. Your main branches are never changed.')),
           h('div',{class:'navrow'}, back(backHome), h('button',{type:'button', class:'primary', disabled:s.busy, onclick:() => {
             state.setup.busy = true; renderSetup();
             setTimeout(() => { state.github = true; try { localStorage.setItem('osc-gh','1'); } catch (e) {} if (state.setup.key !== 'gh') return; toast('GitHub connected'); goStep('repo'); }, 1000);
