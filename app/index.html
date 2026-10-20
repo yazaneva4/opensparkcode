@@ -217,6 +217,17 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
 .ready-card small{color:var(--mute);font-size:14px}
 .banner{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:12px;background:#ff6a0014;border:1px solid #ff6a0050;font-size:14px;margin-top:18px}
 .banner svg{width:18px;height:18px;color:var(--spark);flex:none;margin-top:2px}
+.opt .box{margin-left:auto;width:20px;height:20px;border-radius:6px;border:2px solid #55555d;flex:none;display:grid;place-items:center;color:transparent}
+.opt .box svg{width:14px;height:14px}
+.opt[aria-checked="true"] .box{background:var(--spark);border-color:var(--spark);color:var(--ink)}
+.opt:disabled{opacity:.55;cursor:default}
+.ws-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.ws-row:first-child{padding-top:0}
+.ws-row:last-of-type{border-bottom:0}
+.ws-row strong{display:block;overflow-wrap:anywhere}
+.branchtag{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--green);overflow-wrap:anywhere;text-align:right}
+.rowlabel{font-size:14px;font-weight:600;margin:16px 0 6px;overflow-wrap:anywhere}
+.rowlabel+.field{margin-top:0}
 .dangerlink{border:0;background:transparent;color:var(--mute);font-size:13px;text-decoration:underline;padding:4px 0}
 
 @media(max-width:700px){
@@ -305,7 +316,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
                     <button class="primary" type="submit">Plan task</button>
                   </div>
                 </form>
-                <div class="ready-card"><strong id="wsTitle"></strong><small id="wsSub"></small></div>
+                <div class="ready-card"><div id="wsList"></div><button type="button" class="secondary hidden" id="addRepo" data-action="addrepo" style="margin-top:12px;width:100%">Add another repository</button></div>
               </div>
             </section>
 
@@ -415,7 +426,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   }
   function icon(name){ const s = document.createElementNS(SVGNS,'svg'); const u = document.createElementNS(SVGNS,'use'); u.setAttribute('href','#i-'+name); s.append(u); return s; }
 
-  const REPOS = ['opensparkcode', 'sparkcode-docs', 'my-website'];
+  const REPOS = ['opensparkcode', 'sparkcode-docs', 'my-website', 'mobile-app', 'api-server'];
   const FOLDERS = {
     local: ['~/Projects/opensparkcode', '~/Projects/sparkcode-docs', '~/Desktop/my-website'],
     vps:   ['/srv/opensparkcode', '/srv/sparkcode-docs', '/home/dev/my-website']
@@ -426,11 +437,11 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     mode:null,            // 'machine' | 'cloud' once set up
     machine:null,         // 'local' | 'vps'
     github:false, ghUser:'yazaneva4',
-    repo:'', branch:'', folder:'',
+    repos:[], folder:'',
     vps:{name:'', addr:'', connected:false},
     ready:false, justReady:'',
     model:'', provider:'', task:'', stage:'', run:0,
-    setup:{mode:null, key:'', sel:'', busy:false, err:''}
+    setup:{mode:null, key:'', sel:'', picked:[], names:{}, adding:false, busy:false, err:''}
   };
   try { if (localStorage.getItem('osc-gh') === '1') state.github = true; } catch (e) {}
 
@@ -443,7 +454,8 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   }
   function workspaceLabel(){
     if (!state.ready) return 'None yet';
-    return state.mode === 'cloud' ? `${state.ghUser}/${state.repo} · ${state.branch}` : state.folder;
+    if (state.mode !== 'cloud') return state.folder;
+    return state.repos.length === 1 ? `${state.ghUser}/${state.repos[0].name} · ${state.repos[0].branch}` : `${state.repos.length} repositories, each on its own branch`;
   }
 
   /* ----- device switch ----- */
@@ -503,8 +515,10 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     $('#homeSetup').classList.toggle('hidden', state.ready);
     $('#homeReady').classList.toggle('hidden', !state.ready);
     $('#whereLabel').textContent = w;
-    $('#wsTitle').textContent = state.mode === 'cloud' ? `${state.ghUser}/${state.repo}` : state.folder;
-    $('#wsSub').textContent = state.mode === 'cloud' ? `New branch ${state.branch}` : (state.machine === 'vps' ? `On your server ${state.vps.name || state.vps.addr}` : 'On this computer');
+    const wl = $('#wsList'); wl.replaceChildren();
+    if (state.mode === 'cloud') state.repos.forEach(r => wl.append(h('div',{class:'ws-row'}, h('span',null, h('strong',null,`${state.ghUser}/${r.name}`), h('small',{style:'color:var(--mute);font-size:13px'},'Works only on this new branch')), h('span',{class:'branchtag'}, r.branch))));
+    else wl.append(h('div',{class:'ws-row'}, h('span',null, h('strong',null,state.folder), h('small',{style:'color:var(--mute);font-size:13px'}, state.machine === 'vps' ? `On your server ${state.vps.name || state.vps.addr}` : 'On this computer'))));
+    $('#addRepo').classList.toggle('hidden', state.mode !== 'cloud' || state.repos.length >= REPOS.length);
     const bn = $('#banner'); bn.classList.toggle('hidden', !state.justReady); $('#bannerText').textContent = state.justReady;
 
     // sessions
@@ -520,7 +534,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   function renderConnections(){
     const box = $('#connList'); box.replaceChildren();
     box.append(state.github
-      ? item('branch', 'GitHub', `Connected as ${state.ghUser}`, 'Disconnect', () => disconnectGithub())
+      ? item('branch', 'GitHub', `Connected as ${state.ghUser}` + (state.repos.length ? ` · ${state.repos.length} ${state.repos.length === 1 ? 'repository' : 'repositories'} added` : ''), 'Disconnect', () => disconnectGithub())
       : item('branch', 'GitHub', 'Not connected. Needed for cloud tasks.', 'Connect GitHub', () => startSetup('cloud'), 'primary'));
     box.append(state.vps.connected
       ? item('server', 'Cloud VPS', `Connected to ${state.vps.name || state.vps.addr}`, 'Disconnect', () => disconnectVps())
@@ -531,7 +545,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   }
   function disconnectGithub(){
     state.github = false; try { localStorage.removeItem('osc-gh'); } catch (e) {}
-    if (state.mode === 'cloud') { state.ready = false; state.mode = null; state.repo = ''; state.branch = ''; }
+    if (state.mode === 'cloud') { state.ready = false; state.mode = null; state.repos = []; }
     render(); toast('GitHub disconnected');
   }
   function disconnectVps(){
@@ -542,14 +556,15 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
 
   /* ----- setup flow ----- */
   function stepsFor(mode){
-    if (mode === 'cloud') return [{k:'gh',t:'Connect GitHub'},{k:'repo',t:'Repository'},{k:'branch',t:'New branch'}];
+    if (mode === 'cloud') return [{k:'gh',t:'Connect GitHub'},{k:'repo',t:'Repositories'},{k:'branch',t:'New branches'}];
     return state.pendingMachine === 'vps'
       ? [{k:'kind',t:'Choose'},{k:'connect',t:'Connect server'},{k:'folder',t:'Folder'}]
       : [{k:'kind',t:'Choose'},{k:'folder',t:'Folder'}];
   }
-  function startSetup(mode, machine){
-    state.setup = {mode, key:'', sel:'', busy:false, err:''};
+  function startSetup(mode, machine, adding){
+    state.setup = {mode, key:'', sel:'', picked:[], names:{}, adding:!!adding, busy:false, err:''};
     state.pendingMachine = machine || null;
+    if (mode === 'cloud' && !adding) state.repos = [];
     if (mode === 'cloud') state.setup.key = state.github ? 'repo' : 'gh';
     else if (machine === 'vps') state.setup.key = state.vps.connected ? 'folder' : 'connect';
     else if (machine === 'local') state.setup.key = 'folder';
@@ -631,27 +646,48 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
       }
     }
 
-    /* cloud: repo */
+    /* cloud: repositories (pick one or more) */
     else if (s.key === 'repo') {
-      body.append(h('div',{class:'okbox'}, icon('check'), `GitHub connected as ${state.ghUser}`), h('h2',{class:'setup-h'},'Choose a repository'), h('p',{class:'sub'},'The agent will work on a new branch of this repository.'));
-      const group = h('div',{role:'radiogroup','aria-label':'Repository'});
-      REPOS.forEach(r => group.append(h('button',{type:'button', class:'opt', role:'radio','aria-checked':String(s.sel === r), onclick:() => { state.setup.sel = r; renderSetup(); }},
-        h('span',{class:'ic'}, icon('branch')), h('span',null, h('strong',null,`${state.ghUser}/${r}`), h('small',null,'Default branch: main')), h('span',{class:'radio'}))));
-      body.append(group, h('div',{class:'navrow'}, back(() => goStep('gh')), h('button',{type:'button', class:'primary', disabled:!s.sel, onclick:() => { state.repo = s.sel; goStep('branch'); }}, 'Continue')));
+      const added = state.repos.map(r => r.name);
+      body.append(h('div',{class:'okbox'}, icon('check'), `GitHub connected as ${state.ghUser}`), h('h2',{class:'setup-h'}, s.adding ? 'Add repositories' : 'Choose repositories'), h('p',{class:'sub'},'Pick one or more. Each repository gets its own new branch, and the agent only works on that branch.'));
+      const group = h('div',{role:'group','aria-label':'Repositories'});
+      REPOS.forEach(r => {
+        const isAdded = added.includes(r), on = s.picked.includes(r);
+        group.append(h('button',{type:'button', class:'opt', role:'checkbox','aria-checked':String(isAdded || on), disabled:isAdded, onclick:() => {
+          state.setup.picked = on ? s.picked.filter(x => x !== r) : [...s.picked, r]; renderSetup();
+        }}, h('span',{class:'ic'}, icon('branch')), h('span',null, h('strong',null,`${state.ghUser}/${r}`), h('small',null, isAdded ? 'Already added' : 'Default branch: main')), h('span',{class:'box'}, icon('check'))));
+      });
+      const n = s.picked.length;
+      body.append(group, h('p',{class:'hint'}, n ? `${n} selected` : 'Select at least one repository.'),
+        h('div',{class:'navrow'}, back(() => s.adding ? view('home') : goStep('gh')), h('button',{type:'button', class:'primary', disabled:!n, onclick:() => goStep('branch')}, n > 1 ? `Continue with ${n} repositories` : 'Continue')));
     }
 
-    /* cloud: branch */
+    /* cloud: one new branch per repository */
     else if (s.key === 'branch') {
-      body.append(h('h2',{class:'setup-h'},'Name the new branch'), h('p',{class:'sub'}, `The agent works on this branch of ${state.ghUser}/${state.repo}. Your main branch stays safe.`));
-      const input = h('input',{class:'field', id:'branchName', maxlength:'60', value: state.branch || 'spark/task-1', autocomplete:'off', 'aria-describedby':'branchErr'});
+      const many = s.picked.length > 1;
+      body.append(h('h2',{class:'setup-h'}, many ? 'Name the new branches' : 'Name the new branch'), h('p',{class:'sub'}, many ? 'Each repository gets its own branch. The agent only works on these branches, so your main branches stay safe.' : `The agent works on this branch of ${state.ghUser}/${s.picked[0]}. Your main branch stays safe.`));
+      const inputs = s.picked.map((r, i) => {
+        const input = h('input',{class:'field', id:'branch-'+i, maxlength:'60', value: s.names[r] || ('spark/' + r), autocomplete:'off', 'aria-label':`Branch name for ${r}`});
+        body.append(h('div',{class:'rowlabel'}, `${state.ghUser}/${r}`), input);
+        return [r, input];
+      });
       const err = h('div',{class:'err', id:'branchErr'}, s.err);
       const btn = h('button',{type:'button', class:'primary', disabled:s.busy, onclick:() => {
-        const v = input.value.trim();
-        if (!/^[A-Za-z0-9._\/-]+$/.test(v) || v === 'main') { state.setup.err = v === 'main' ? 'Pick a new name. “main” already exists.' : 'Use letters, numbers, dashes, dots and slashes. No spaces.'; err.textContent = state.setup.err; input.focus(); return; }
-        state.branch = v; state.setup.busy = true; state.setup.err = ''; renderSetup();
-        setTimeout(() => { if (state.setup.key !== 'branch') return; state.mode = 'cloud'; state.machine = null; finishSetup(`Branch ${v} created. The agent is ready to work.`, true); }, 1000);
-      }}, s.busy ? 'Creating branch…' : 'Create branch');
-      body.append(h('label',{class:'f', for:'branchName'},'Branch name'), input, err, h('div',{class:'navrow'}, back(() => goStep('repo')), btn));
+        const names = {};
+        for (const [r, input] of inputs) {
+          const v = input.value.trim(); names[r] = v;
+          const bad = !/^[A-Za-z0-9._\/-]+$/.test(v) ? 'Use letters, numbers, dashes, dots and slashes. No spaces.' : (v === 'main' ? 'Pick a new name. \u201cmain\u201d already exists.' : '');
+          if (bad) { state.setup.names = names; state.setup.err = `${r}: ${bad}`; err.textContent = state.setup.err; input.focus(); return; }
+        }
+        state.setup.names = names; state.setup.busy = true; state.setup.err = ''; renderSetup();
+        setTimeout(() => {
+          if (state.setup.key !== 'branch') return;
+          state.mode = 'cloud'; state.machine = null;
+          s.picked.forEach(r => state.repos.push({name:r, branch:names[r]}));
+          finishSetup(s.picked.length > 1 ? `${s.picked.length} branches created. The agent is ready to work.` : `Branch ${names[s.picked[0]]} created. The agent is ready to work.`, true);
+        }, 1000);
+      }}, s.busy ? (many ? 'Creating branches\u2026' : 'Creating branch\u2026') : (many ? 'Create branches' : 'Create branch'));
+      body.append(err, h('div',{class:'navrow'}, back(() => goStep('repo')), btn));
     }
   }
 
@@ -685,10 +721,10 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     $('#taskMeta').textContent = `${workspaceLabel()} · ${state.provider} ${state.model}`;
     const li = steps();
     li[0].textContent = 'Read the project and find the files involved';
-    li[1].textContent = isCloud() ? `Make the change on ${state.branch}` : `Make the change in ${state.folder}`;
+    li[1].textContent = !isCloud() ? `Make the change in ${state.folder}` : (state.repos.length === 1 ? `Make the change on ${state.repos[0].branch}` : `Make the change on each repository's own new branch`);
     li[2].textContent = 'Run checks and prepare the changes for review';
     li.forEach(x => x.className = 'wait');
-    $('#accept').textContent = isCloud() ? 'Open pull request' : 'Keep changes';
+    $('#accept').textContent = isCloud() ? (state.repos.length > 1 ? 'Open pull requests' : 'Open pull request') : 'Keep changes';
     $('#planActions').classList.remove('hidden'); $('#runActions').classList.add('hidden'); $('#review').classList.add('hidden');
     $('#reviewActions').classList.remove('hidden'); $('#doneActions').classList.add('hidden');
     setStage(1, 'Plan ready for review'); view('task');
@@ -705,7 +741,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
       li[i].className = 'done';
     }
     $('#runActions').classList.add('hidden'); $('#review').classList.remove('hidden');
-    $('#reviewNote').textContent = isCloud() ? `Sample diff on ${state.branch}. Opening a pull request is simulated.` : 'Sample diff. Keeping the changes only updates the prototype.';
+    $('#reviewNote').textContent = isCloud() ? (state.repos.length > 1 ? `Sample diffs, one per repository, each on its own branch. Opening pull requests is simulated.` : `Sample diff on ${state.repos[0].branch}. Opening a pull request is simulated.`) : 'Sample diff. Keeping the changes only updates the prototype.';
     setStage(3, 'Ready for your review'); showDiff();
   });
   $('#edit').addEventListener('click', () => { $('#prompt').value = state.task; view('home'); $('#prompt').focus(); });
@@ -716,13 +752,17 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     setStage(1, 'Stopped. You can run the plan again.');
   });
   function showDiff(){
-    const lines = [['c','// App.tsx (sample)'],['r','- <button>Continue</button>'],['a','+ <button className="spark-action">'],['a','+   Start building'],['a','+ </button>'],['c',''],['c','/* app.css (sample) */'],['a','+ .spark-action { background: #ff6a00; min-height: 44px; }']];
+    const body = [['r','- <button>Continue</button>'],['a','+ <button className="spark-action">'],['a','+   Start building'],['a','+ </button>']];
+    const lines = [];
+    if (isCloud()) state.repos.forEach((r, i) => { if (i) lines.push(['c','']); lines.push(['c',`// ${r.name} on ${r.branch} (sample)`], ...body); });
+    else lines.push(['c','// App.tsx (sample)'], ...body, ['c',''], ['c','/* app.css (sample) */'], ['a','+ .spark-action { background: #ff6a00; min-height: 44px; }']);
     const d = $('#diff'); d.replaceChildren();
     lines.forEach(([c,t]) => { d.append(h('span',{class:c}, t), document.createTextNode('\n')); });
   }
   $('#accept').addEventListener('click', () => {
-    const label = isCloud() ? 'Pull request opened' : 'Changes kept';
-    setStage(3, label); $('#reviewNote').textContent = isCloud() ? `Pull request opened from ${state.branch} (simulated). Nothing was pushed.` : 'Changes kept in the prototype. No files were changed.';
+    const multi = isCloud() && state.repos.length > 1;
+    const label = isCloud() ? (multi ? 'Pull requests opened' : 'Pull request opened') : 'Changes kept';
+    setStage(3, label); $('#reviewNote').textContent = isCloud() ? (multi ? `${state.repos.length} pull requests opened, one per branch (simulated). Nothing was pushed.` : `Pull request opened from ${state.repos[0].branch} (simulated). Nothing was pushed.`) : 'Changes kept in the prototype. No files were changed.';
     $('#reviewActions').classList.add('hidden'); $('#doneActions').classList.remove('hidden'); toast(label);
   });
   $('#discard').addEventListener('click', () => {
@@ -737,9 +777,10 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     if (e.target.closest('[data-close]') || e.target.classList.contains('scrim')) closeSheets();
     const m = e.target.closest('[data-mode]'); if (m) startSetup(m.dataset.mode);
     if (e.target.closest('[data-action="changesetup"]')) { state.ready = false; state.justReady = ''; view('home'); }
+    if (e.target.closest('[data-action="addrepo"]')) startSetup('cloud', null, true);
     if (e.target.closest('[data-action="newtask"]')) { $('#prompt').value = ''; view('home'); if (state.ready) $('#prompt').focus(); }
     if (e.target.closest('[data-action="reset"]')) {
-      state.mode = null; state.machine = null; state.ready = false; state.justReady = ''; state.github = false; state.repo = ''; state.branch = ''; state.folder = '';
+      state.mode = null; state.machine = null; state.ready = false; state.justReady = ''; state.github = false; state.repos = []; state.folder = '';
       state.vps = {name:'', addr:'', connected:false}; state.model = ''; state.provider = ''; state.task = ''; state.stage = ''; state.run++;
       try { localStorage.removeItem('osc-gh'); } catch (er) {}
       $('#prompt').value = ''; $('#modelName').value = ''; view('home'); toast('Started over');
