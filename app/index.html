@@ -409,7 +409,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     device.setAttribute('aria-label', 'OpenSparkcode ' + kind + ' prototype');
     $$('[data-device]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.device === kind)));
     if (kind === 'phone' && state.host === 'local') state.host = 'cloud';
-    $('#localDesc').textContent = kind === 'phone' ? 'Control another computer or your VPS' : 'This computer, a remote one, or your VPS';
+    $('#localDesc').textContent = kind === 'phone' ? 'Control another computer or your VPS' : 'This computer, another computer, or your VPS';
     try { localStorage.setItem('osc-device', kind); } catch (e) {}
     closeSheets(); render(); fit();
   }
