@@ -231,6 +231,34 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
 .paircode{font:700 44px/1 var(--display);letter-spacing:.08em;text-align:center;padding:22px 0;margin:6px 0 4px;border-radius:16px;background:#08080a;border:1px solid #34343a;color:var(--spark)}
 .steps{margin:6px 0 4px;padding-left:20px;color:var(--text)}
 .steps li{margin:6px 0}
+.main{--padb:28px}
+.is-phone .main{--padb:24px}
+.sess-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sess-title{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:10px 0 6px;overflow-wrap:anywhere}
+.is-phone .sess-title{font-size:24px}
+.sess-ws{font-size:13px;color:var(--mute);padding:8px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);overflow-wrap:anywhere}
+.chat{display:flex;flex-direction:column;gap:18px;margin:20px 0 18px}
+.msg.user{align-self:flex-end;max-width:85%}
+.msg.user .bubble{background:var(--tile);border:1px solid #34343a;border-radius:18px 18px 4px 18px;padding:10px 14px;overflow-wrap:anywhere;white-space:pre-wrap}
+.msg.agent{display:flex;gap:10px;align-items:flex-start;max-width:100%}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--spark);color:var(--ink);display:grid;place-items:center;flex:none;margin-top:2px}
+.avatar svg{width:14px;height:14px}
+.abody{min-width:0;flex:1}
+.ameta{font-size:12px;color:var(--mute);margin-bottom:4px}
+.abody p{margin:0 0 8px;overflow-wrap:anywhere}
+.abody .plan{margin:8px 0}
+.card{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;margin-top:6px}
+.card .actions{margin-top:12px}
+.note-line{font-size:13px;color:var(--mute);margin-top:8px}
+.chat-composer textarea{min-height:48px}
+.chat-composer{position:sticky;bottom:calc(var(--padb) * -1);padding:12px 0 var(--padb);background:linear-gradient(to bottom,transparent,var(--ink) 18px)}
+.sess{display:block;text-align:left;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.sess:hover{border-color:#4a4a52}
+.sess .top-row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.sess strong{overflow-wrap:anywhere}
+.sess .prev{display:block;color:var(--mute);font-size:14px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess .meta2{display:block;color:var(--mute);font-size:12px;margin-top:6px;overflow-wrap:anywhere}
+.tagsample{font-size:11px;font-weight:600;color:var(--mute);border:1px solid #3a3a40;border-radius:999px;padding:2px 8px;flex:none}
 .dangerlink{border:0;background:transparent;color:var(--mute);font-size:13px;text-decoration:underline;padding:4px 0}
 
 @media(max-width:700px){
@@ -288,11 +316,13 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
         <div class="body">
           <aside class="sidebar">
             <div class="side-brand"><img class="logo-sm" src="logo.png" alt=""><span>Open<b>Spark</b>code</span></div>
-            <button class="primary newtask" data-action="newtask"><svg width="16" height="16"><use href="#i-plus"/></svg>New task</button>
+            <button class="primary newtask" data-action="newsession"><svg width="16" height="16"><use href="#i-plus"/></svg>New session</button>
             <button class="navbtn" data-view="home" aria-current="page"><svg><use href="#i-home"/></svg>Home</button>
             <button class="navbtn" data-view="sessions"><svg><use href="#i-clock"/></svg>Sessions</button>
             <button class="navbtn" data-view="connections"><svg><use href="#i-link"/></svg>Connections</button>
             <button class="navbtn" data-view="settings"><svg><use href="#i-gear"/></svg>Settings</button>
+            <div class="side-group">Recent sessions</div>
+            <div id="sideRecent"></div>
             <div class="side-foot"><strong id="sideWhere">Not set up yet</strong><span id="sideWhereSub">Pick where the agent runs</span></div>
           </aside>
 
@@ -316,7 +346,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
                   <textarea id="prompt" aria-label="Describe your task" placeholder="Describe a task, like “Add a dark mode toggle”"></textarea>
                   <div class="composer-row">
                     <span class="chips"><button type="button" class="chipbtn" data-open="model"><svg class="star"><use href="#i-star"/></svg><span id="modelLabel">Choose a model</span></button></span>
-                    <button class="primary" type="submit">Plan task</button>
+                    <button class="primary" type="submit">Start session</button>
                   </div>
                 </form>
                 <div class="ready-card"><div id="wsList"></div><button type="button" class="secondary hidden" id="addRepo" data-action="addrepo" style="margin-top:12px;width:100%">Add another repository</button></div>
@@ -331,8 +361,8 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
 
             <!-- sessions -->
             <section data-page="sessions" class="hidden">
-              <h2 class="h-page">Sessions</h2>
-              <p class="sub">Tasks you plan show up here.</p>
+              <div class="section-h" style="margin-top:18px"><h2 class="h-page" style="margin:0">Sessions</h2><button class="primary" data-action="newsession" style="padding:9px 16px;font-size:14px">New session</button></div>
+              <p class="sub">Every session keeps its messages and the replies the model gave. Open one to pick up where you left off.</p>
               <div id="sessionList"></div>
             </section>
 
@@ -352,28 +382,29 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
               <button class="item" data-action="reset"><span class="ic"><svg><use href="#i-clock"/></svg></span><span class="grow"><strong>Start over</strong><small>Disconnect everything and clear the task and model</small></span></button>
             </section>
 
-            <!-- task -->
-            <section data-page="task" class="hidden">
-              <button class="linkbtn" data-view="home">Back to home</button>
-              <div class="stepper"><span id="s1"></span><span id="s2"></span><span id="s3"></span></div>
-              <div class="stage-label" id="stageLabel">Plan ready for review</div>
-              <h2 class="task-title" id="taskTitle"></h2>
-              <div class="meta" id="taskMeta"></div>
-              <ol class="plan" id="plan"><li></li><li></li><li></li></ol>
-              <div class="actions" id="planActions"><button class="secondary" id="edit">Edit task</button><button class="primary" id="run">Approve and run</button></div>
-              <div class="actions hidden" id="runActions"><button class="secondary" id="stop">Stop run</button></div>
-              <div id="review" class="hidden">
-                <div class="stats"><div><strong>+12 −3</strong>Sample changes</div><div><strong style="color:var(--green)">3 passed</strong>Sample checks</div></div>
-                <div class="diff" id="diff"></div>
-                <div class="actions" id="reviewActions"><button class="secondary" id="discard">Discard changes</button><button class="primary" id="accept">Keep changes</button></div>
-                <div class="actions hidden" id="doneActions"><button class="primary" id="another">Start another task</button></div>
-                <p class="hint" id="reviewNote"></p>
+            <!-- session (chat) -->
+            <section data-page="session" class="hidden">
+              <div class="sess-head">
+                <button class="linkbtn" data-view="sessions">All sessions</button>
+                <button class="dangerlink" data-action="delsession">Delete session</button>
               </div>
+              <h2 class="sess-title" id="sessTitle"></h2>
+              <div class="sess-ws" id="sessWs"></div>
+              <div class="chat" id="chat"></div>
+              <form class="chat-composer" id="chatForm">
+                <div class="composer" style="margin-top:0">
+                  <textarea id="chatInput" aria-label="Message the agent" placeholder="Message the agent. Enter sends, Shift+Enter adds a line."></textarea>
+                  <div class="composer-row">
+                    <span class="chips"><button type="button" class="chipbtn" data-open="model"><svg class="star"><use href="#i-star"/></svg><span id="modelLabel2">Choose a model</span></button></span>
+                    <button class="primary" type="submit">Send</button>
+                  </div>
+                </div>
+              </form>
             </section>
           </main>
 
           <aside class="inspector">
-            <h3>This task</h3>
+            <h3>Your setup</h3>
             <div class="kv">Runs on<strong id="inspWhere">Not set up yet</strong></div>
             <div class="kv" id="inspWsRow">Workspace<strong id="inspWs">None yet</strong></div>
             <div class="kv">Model<strong id="inspModel">Not chosen yet</strong></div>
@@ -504,7 +535,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   function view(name){
     current = name;
     $$('[data-page]').forEach(p => p.classList.toggle('hidden', p.dataset.page !== name));
-    const navName = name === 'setup' || name === 'task' ? 'home' : name;
+    const navName = name === 'setup' ? 'home' : (name === 'session' ? 'sessions' : name);
     $$('.navbtn[data-view]').forEach(b => b.dataset.view === navName ? b.setAttribute('aria-current','page') : b.removeAttribute('aria-current'));
     $('#main').scrollTop = 0;
     render();
@@ -539,11 +570,8 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     $('#addRepo').classList.toggle('hidden', state.mode !== 'cloud' || state.repos.length >= REPOS.length);
     const bn = $('#banner'); bn.classList.toggle('hidden', !state.justReady); $('#bannerText').textContent = state.justReady;
 
-    // sessions
-    const sl = $('#sessionList'); sl.replaceChildren();
-    if (!state.task) sl.append(h('div',{class:'empty'},'No sessions yet. Plan a task from Home to see one here.'));
-    else sl.append(item('clock', state.task, `${state.stage} · ${workspaceLabel()}`, 'Open', () => view('task')));
-
+    renderSessions();
+    $('#modelLabel2').textContent = $('#modelLabel').textContent;
     renderConnections();
     if (current === 'setup') renderSetup();
   }
@@ -752,76 +780,164 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     const f = s.querySelector('input,select,button'); if (f) f.focus();
   }
   function closeSheets(){ $$('[data-sheet]').forEach(s => s.classList.add('hidden')); }
-  $('#saveModel').addEventListener('click', () => {
-    const v = $('#modelName').value.trim();
-    if (!v) { $('#modelName').focus(); toast('Type a model name first'); return; }
-    state.model = v; state.provider = $('#provider').value; closeSheets(); render(); toast('Model chosen');
-  });
-
-  /* ----- task flow ----- */
-  const steps = () => $$('#plan li');
-  function setStage(n, label){
-    ['#s1','#s2','#s3'].forEach((s,i) => $(s).classList.toggle('on', i < n));
-    $('#stageLabel').textContent = label; state.stage = label;
+  /* ----- sessions ----- */
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  let sessions = [], openId = null, afterModel = null;
+  const SAMPLE_WS = {where:'Managed cloud', label:'yazaneva4/opensparkcode · spark/dark-mode', cloud:true, branches:[{name:'opensparkcode', branch:'spark/dark-mode'}]};
+  function seedSessions(){
+    const M = 'Anthropic · sample-model';
+    const dl = [['r','- <button>Continue</button>'],['a','+ <button className="spark-action">'],['a','+   Start building'],['a','+ </button>']];
+    return [
+      {id:'sample-1', sample:true, title:'Add a dark mode toggle', updated:'Yesterday', ws:SAMPLE_WS, messages:[
+        {role:'user', text:'Add a dark mode toggle to the settings page.'},
+        {role:'agent', model:M, kind:'plan', text:'Here is my plan. Approve it and I will start.', steps:['Read the project and find the files involved','Make the change on spark/dark-mode','Run checks and prepare the changes for review'], status:'done', progress:3},
+        {role:'agent', model:M, kind:'result', text:'Done. I added a toggle to the settings page and saved the choice. Review the changes below.', diff:[['c','// opensparkcode on spark/dark-mode (sample)'],...dl], cloud:true, multi:false, decision:'pr'},
+        {role:'user', text:'Can you also remember the choice after a reload?'},
+        {role:'agent', model:M, text:'It already does. The toggle writes the choice to local storage and reads it back when the page loads, so a reload keeps it. If storage is blocked, it falls back to the system setting.'}
+      ]},
+      {id:'sample-2', sample:true, title:'Why is the login redirecting in a loop?', updated:'2 days ago', ws:{where:'Cloud VPS (Hetzner box)', label:'/srv/opensparkcode', cloud:false, folder:'/srv/opensparkcode', machineName:''}, messages:[
+        {role:'user', text:'After signing in, the app keeps sending me back to /login. Why?'},
+        {role:'agent', model:'OpenAI · sample-model', text:'The redirect target is read from the query string. When the next page is /login itself, it sends you back to /login forever. The fix is to ignore a target that points at /login and go to the dashboard instead.'},
+        {role:'user', text:'Fix it, but keep the change small.'},
+        {role:'agent', model:'OpenAI · sample-model', kind:'plan', text:'Here is my plan. Approve it and I will start.', steps:['Read the project and find the files involved','Make the change in /srv/opensparkcode','Run checks and prepare the changes for review'], status:'cancelled', progress:0},
+        {role:'agent', model:'OpenAI · sample-model', text:'You cancelled that plan, so I changed nothing. Tell me when you want me to try again.'}
+      ]},
+      {id:'sample-3', sample:true, title:'Explain the build script', updated:'Last week', ws:{where:'This computer', label:'~/Projects/sparkcode-docs', cloud:false, folder:'~/Projects/sparkcode-docs'}, messages:[
+        {role:'user', text:'What does the build script do?'},
+        {role:'agent', model:'Google · sample-model', text:'It deletes the output folder, copies the site files and assets into it, then stamps the page with the current revision so open pages can tell when a new version is ready.'}
+      ]}
+    ];
   }
-  function isCloud(){ return state.mode === 'cloud'; }
+  function loadSessions(){
+    try { const raw = localStorage.getItem('osc-sessions'); if (raw) { sessions = JSON.parse(raw); sessions.forEach(x => x.messages.forEach(m => { if (m.status === 'running') m.status = 'stopped'; })); return; } } catch (e) {}
+    sessions = seedSessions();
+  }
+  function saveSessions(){ try { localStorage.setItem('osc-sessions', JSON.stringify(sessions)); } catch (e) {} }
+  loadSessions();
+
+  const modelName = () => state.model ? `${state.provider} · ${state.model}` : 'No model';
+  function currentWs(){
+    return {where: whereLabel(), label: workspaceLabel(), cloud: state.mode === 'cloud',
+      branches: state.repos.map(r => ({name:r.name, branch:r.branch})), folder: state.folder, machineName: state.machine === 'remote' ? state.remote.name : ''};
+  }
+  function planSteps(ws){
+    const mid = ws.cloud ? (ws.branches.length === 1 ? `Make the change on ${ws.branches[0].branch}` : `Make the change on each repository's own new branch`)
+      : `Make the change in ${ws.folder}${ws.machineName ? ' on ' + ws.machineName : ''}`;
+    return ['Read the project and find the files involved', mid, 'Run checks and prepare the changes for review'];
+  }
+  function diffLines(ws){
+    const body = [['r','- <button>Continue</button>'],['a','+ <button className="spark-action">'],['a','+   Start building'],['a','+ </button>']];
+    const lines = [];
+    if (ws.cloud) ws.branches.forEach((r, i) => { if (i) lines.push(['c','']); lines.push(['c',`// ${r.name} on ${r.branch} (sample)`], ...body); });
+    else lines.push(['c','// App.tsx (sample)'], ...body, ['c',''], ['c','/* app.css (sample) */'], ['a','+ .spark-action { background: #ff6a00; min-height: 44px; }']);
+    return lines;
+  }
+  const sessById = id => sessions.find(x => x.id === id);
+  function preview(x){ const m = x.messages[x.messages.length - 1]; if (!m) return 'No messages yet'; if (m.kind === 'plan') return 'Plan: ' + m.steps[1]; if (m.kind === 'result') return m.text; return m.text; }
+
+  function renderSessions(){
+    const box = $('#sessionList'); box.replaceChildren();
+    if (!sessions.length) box.append(h('div',{class:'empty'},'No sessions yet. Choose New session to start one.'));
+    sessions.forEach(x => {
+      const b = h('button',{type:'button', class:'sess', onclick:() => openSession(x.id)},
+        h('span',{class:'top-row'}, h('strong',null,x.title), x.sample ? h('span',{class:'tagsample'},'Sample') : null),
+        h('span',{class:'prev'}, preview(x)),
+        h('span',{class:'meta2'}, `${x.messages.length} ${x.messages.length === 1 ? 'message' : 'messages'} · ${x.updated} · ${x.ws.where}, ${x.ws.label}`));
+      box.append(b);
+    });
+    const side = $('#sideRecent'); side.replaceChildren();
+    sessions.slice(0,3).forEach(x => { const b = h('button',{type:'button', class:'navbtn side-proj', onclick:() => openSession(x.id)}, icon('clock'), x.title.length > 22 ? x.title.slice(0,22) + '…' : x.title); side.append(b); });
+  }
+
+  function openSession(id){ openId = id; view('session'); renderChat(true); $('#chatInput').focus({preventScroll:true}); }
+  function newSession(){
+    if (!state.ready) { toast('Set up where the agent runs first'); view('home'); return null; }
+    const x = {id:'s' + Date.now(), title:'New session', updated:'Just now', ws:currentWs(), messages:[]};
+    sessions.unshift(x); saveSessions(); openSession(x.id); return x;
+  }
+
+  function refresh(x){ renderSessions(); if (current === 'session' && openId === x.id) renderChat(false); }
+  function agentBlock(m, ...content){
+    return h('div',{class:'msg agent'}, h('span',{class:'avatar'}, icon('star')), h('div',{class:'abody'}, h('div',{class:'ameta'}, `OpenSparkcode · ${m.model}`), ...content));
+  }
+  function renderMsg(x, m){
+    if (m.role === 'user') return h('div',{class:'msg user'}, h('div',{class:'bubble'}, m.text));
+    if (m.kind === 'plan') {
+      const ol = h('ol',{class:'plan'});
+      m.steps.forEach((t, i) => ol.append(h('li',{class: i < m.progress ? 'done' : (m.status === 'running' && i === m.progress ? 'now' : 'wait')}, t)));
+      const card = h('div',{class:'card'}, ol);
+      if (m.status === 'waiting') card.append(h('div',{class:'actions'}, h('button',{type:'button', class:'secondary', onclick:() => { m.status = 'cancelled'; x.messages.push({role:'agent', model:m.model, text:'Plan cancelled. I changed nothing. Send another message when you are ready.'}); saveSessions(); refresh(x); }}, 'Cancel plan'), h('button',{type:'button', class:'primary', onclick:() => runPlan(x, m)}, 'Approve and run')));
+      else if (m.status === 'running') card.append(h('div',{class:'actions'}, h('button',{type:'button', class:'secondary', onclick:() => { m.status = 'stopped'; x.messages.push({role:'agent', model:m.model, text:'Stopped. Nothing was kept. Send a message to try again.'}); saveSessions(); refresh(x); }}, 'Stop run')));
+      else card.append(h('div',{class:'note-line'}, {done:'Plan finished.', stopped:'Run stopped.', cancelled:'Plan cancelled.'}[m.status] || ''));
+      return agentBlock(m, h('p',null,m.text), card);
+    }
+    if (m.kind === 'result') {
+      const card = h('div',{class:'card'});
+      const d = h('div',{class:'diff'}); m.diff.forEach(([c,t]) => d.append(h('span',{class:c}, t), document.createTextNode('\n')));
+      card.append(d);
+      if (!m.decision) card.append(h('div',{class:'actions'},
+        h('button',{type:'button', class:'secondary', onclick:() => { m.decision = 'discarded'; saveSessions(); refresh(x); toast('Changes discarded'); }}, 'Discard changes'),
+        h('button',{type:'button', class:'primary', onclick:() => { m.decision = m.cloud ? 'pr' : 'kept'; saveSessions(); refresh(x); toast(m.cloud ? (m.multi ? 'Pull requests opened' : 'Pull request opened') : 'Changes kept'); }}, m.cloud ? (m.multi ? 'Open pull requests' : 'Open pull request') : 'Keep changes')));
+      else card.append(h('div',{class:'note-line'}, {discarded:'Changes discarded.', kept:'Changes kept in the prototype. No files were changed.', pr: m.multi ? 'Pull requests opened, one per branch (simulated). Nothing was pushed.' : 'Pull request opened (simulated). Nothing was pushed.'}[m.decision]));
+      return agentBlock(m, h('p',null,m.text), card);
+    }
+    return agentBlock(m, h('p',null,m.text));
+  }
+  function renderChat(toBottom){
+    const x = sessById(openId); if (!x) return;
+    $('#sessTitle').textContent = x.title;
+    $('#sessWs').textContent = `${x.ws.where} · ${x.ws.label}`;
+    const box = $('#chat'); box.replaceChildren();
+    if (!x.messages.length) box.append(h('div',{class:'empty'},'New session. Describe what you want done. The agent replies with a plan, and nothing runs until you approve it.'));
+    x.messages.forEach(m => box.append(renderMsg(x, m)));
+    const main = $('#main'); if (toBottom !== false) main.scrollTop = main.scrollHeight; else if (main.scrollHeight - main.scrollTop - main.clientHeight < 200) main.scrollTop = main.scrollHeight;
+  }
+
+  async function runPlan(x, m){
+    m.status = 'running'; m.progress = 0; saveSessions(); refresh(x);
+    for (let i = 0; i < m.steps.length; i++) {
+      await wait(900);
+      if (m.status !== 'running' || !sessions.includes(x)) return;
+      m.progress = i + 1; saveSessions(); refresh(x);
+    }
+    m.status = 'done';
+    const multi = x.ws.cloud && x.ws.branches.length > 1;
+    x.messages.push({role:'agent', model:m.model, kind:'result', text: x.ws.cloud ? `Done. I made the change${multi ? 's' : ''} on ${multi ? 'each repository’s new branch' : x.ws.branches[0].branch}. Review the changes below.` : `Done. I made the change in ${x.ws.folder}. Review the changes below.`, diff: diffLines(x.ws), cloud: x.ws.cloud, multi, decision:null});
+    x.updated = 'Just now'; saveSessions(); refresh(x);
+  }
+
+  function sendMessage(x, text){
+    x.messages.push({role:'user', text});
+    if (x.title === 'New session') x.title = text.length > 42 ? text.slice(0,42) + '…' : text;
+    x.messages.push({role:'agent', model:modelName(), kind:'plan', text:'Here is my plan. Approve it and I will start.', steps:planSteps(x.ws), status:'waiting', progress:0});
+    x.updated = 'Just now';
+    sessions = [x, ...sessions.filter(y => y !== x)]; saveSessions(); refresh(x);
+  }
+  function needModel(fn){ if (state.model) return false; afterModel = fn; openSheet('model'); toast('Choose a model first'); return true; }
+
+  $('#chatForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const x = sessById(openId); if (!x) return;
+    const v = $('#chatInput').value.trim();
+    if (!v) { $('#chatInput').focus(); return; }
+    if (needModel(() => $('#chatForm').requestSubmit())) return;
+    $('#chatInput').value = ''; sendMessage(x, v);
+  });
+  $('#chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#chatForm').requestSubmit(); } });
   $('#composer').addEventListener('submit', e => {
     e.preventDefault();
     const v = $('#prompt').value.trim();
     if (!v) { $('#prompt').focus(); toast('Describe the task first'); return; }
-    if (!state.model) { openSheet('model'); toast('Choose a model to plan the task'); return; }
-    state.run++; state.task = v; state.justReady = '';
-    $('#taskTitle').textContent = v;
-    $('#taskMeta').textContent = `${workspaceLabel()} · ${state.provider} ${state.model}`;
-    const li = steps();
-    li[0].textContent = 'Read the project and find the files involved';
-    li[1].textContent = !isCloud() ? `Make the change in ${state.folder}${state.machine === 'remote' ? ' on ' + state.remote.name : ''}` : (state.repos.length === 1 ? `Make the change on ${state.repos[0].branch}` : `Make the change on each repository's own new branch`);
-    li[2].textContent = 'Run checks and prepare the changes for review';
-    li.forEach(x => x.className = 'wait');
-    $('#accept').textContent = isCloud() ? (state.repos.length > 1 ? 'Open pull requests' : 'Open pull request') : 'Keep changes';
-    $('#planActions').classList.remove('hidden'); $('#runActions').classList.add('hidden'); $('#review').classList.add('hidden');
-    $('#reviewActions').classList.remove('hidden'); $('#doneActions').classList.add('hidden');
-    setStage(1, 'Plan ready for review'); view('task');
+    if (needModel(() => $('#composer').requestSubmit())) return;
+    state.justReady = ''; $('#prompt').value = '';
+    const x = {id:'s' + Date.now(), title:'New session', updated:'Just now', ws:currentWs(), messages:[]};
+    sessions.unshift(x); openId = x.id; sendMessage(x, v); view('session'); renderChat(true);
   });
-  const wait = ms => new Promise(r => setTimeout(r, ms));
-  $('#run').addEventListener('click', async () => {
-    const token = ++state.run;
-    $('#planActions').classList.add('hidden'); $('#runActions').classList.remove('hidden');
-    setStage(2, 'The agent is working (simulated)');
-    const li = steps();
-    for (let i = 0; i < li.length; i++) {
-      li[i].className = 'now'; await wait(900);
-      if (token !== state.run) return;
-      li[i].className = 'done';
-    }
-    $('#runActions').classList.add('hidden'); $('#review').classList.remove('hidden');
-    $('#reviewNote').textContent = isCloud() ? (state.repos.length > 1 ? `Sample diffs, one per repository, each on its own branch. Opening pull requests is simulated.` : `Sample diff on ${state.repos[0].branch}. Opening a pull request is simulated.`) : 'Sample diff. Keeping the changes only updates the prototype.';
-    setStage(3, 'Ready for your review'); showDiff();
-  });
-  $('#edit').addEventListener('click', () => { $('#prompt').value = state.task; view('home'); $('#prompt').focus(); });
-  $('#another').addEventListener('click', () => { $('#prompt').value = ''; view('home'); $('#prompt').focus(); });
-  $('#stop').addEventListener('click', () => {
-    state.run++; steps().forEach(li => li.className = 'wait');
-    $('#runActions').classList.add('hidden'); $('#planActions').classList.remove('hidden');
-    setStage(1, 'Stopped. You can run the plan again.');
-  });
-  function showDiff(){
-    const body = [['r','- <button>Continue</button>'],['a','+ <button className="spark-action">'],['a','+   Start building'],['a','+ </button>']];
-    const lines = [];
-    if (isCloud()) state.repos.forEach((r, i) => { if (i) lines.push(['c','']); lines.push(['c',`// ${r.name} on ${r.branch} (sample)`], ...body); });
-    else lines.push(['c','// App.tsx (sample)'], ...body, ['c',''], ['c','/* app.css (sample) */'], ['a','+ .spark-action { background: #ff6a00; min-height: 44px; }']);
-    const d = $('#diff'); d.replaceChildren();
-    lines.forEach(([c,t]) => { d.append(h('span',{class:c}, t), document.createTextNode('\n')); });
-  }
-  $('#accept').addEventListener('click', () => {
-    const multi = isCloud() && state.repos.length > 1;
-    const label = isCloud() ? (multi ? 'Pull requests opened' : 'Pull request opened') : 'Changes kept';
-    setStage(3, label); $('#reviewNote').textContent = isCloud() ? (multi ? `${state.repos.length} pull requests opened, one per branch (simulated). Nothing was pushed.` : `Pull request opened from ${state.repos[0].branch} (simulated). Nothing was pushed.`) : 'Changes kept in the prototype. No files were changed.';
-    $('#reviewActions').classList.add('hidden'); $('#doneActions').classList.remove('hidden'); toast(label);
-  });
-  $('#discard').addEventListener('click', () => {
-    setStage(3, 'Discarded'); $('#reviewNote').textContent = 'Changes discarded.';
-    $('#reviewActions').classList.add('hidden'); $('#doneActions').classList.remove('hidden'); toast('Changes discarded');
+  $('#saveModel').addEventListener('click', () => {
+    const v = $('#modelName').value.trim();
+    if (!v) { $('#modelName').focus(); toast('Type a model name first'); return; }
+    state.model = v; state.provider = $('#provider').value; closeSheets(); render(); toast('Model chosen');
+    if (afterModel) { const fn = afterModel; afterModel = null; fn(); }
   });
 
   /* ----- global clicks ----- */
@@ -832,10 +948,12 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     const m = e.target.closest('[data-mode]'); if (m) startSetup(m.dataset.mode);
     if (e.target.closest('[data-action="changesetup"]')) { state.ready = false; state.justReady = ''; view('home'); }
     if (e.target.closest('[data-action="addrepo"]')) startSetup('cloud', null, true);
-    if (e.target.closest('[data-action="newtask"]')) { $('#prompt').value = ''; view('home'); if (state.ready) $('#prompt').focus(); }
+    if (e.target.closest('[data-action="newsession"]')) newSession();
+    if (e.target.closest('[data-action="delsession"]')) { const x = sessById(openId); if (x) { sessions = sessions.filter(y => y !== x); saveSessions(); view('sessions'); toast('Session deleted'); } }
     if (e.target.closest('[data-action="reset"]')) {
       state.mode = null; state.machine = null; state.ready = false; state.justReady = ''; state.github = false; state.repos = []; state.folder = '';
-      state.vps = {name:'', addr:'', connected:false}; state.remote = {name:'', paired:false}; state.model = ''; state.provider = ''; state.task = ''; state.stage = ''; state.run++;
+      state.vps = {name:'', addr:'', connected:false}; state.remote = {name:'', paired:false}; state.model = ''; state.provider = '';
+      sessions = seedSessions(); try { localStorage.removeItem('osc-sessions'); } catch (er) {}
       try { localStorage.removeItem('osc-gh'); } catch (er) {}
       $('#prompt').value = ''; $('#modelName').value = ''; view('home'); toast('Started over');
     }
