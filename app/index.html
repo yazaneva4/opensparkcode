@@ -259,6 +259,12 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
 .sess .prev{display:block;color:var(--mute);font-size:14px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sess .meta2{display:block;color:var(--mute);font-size:12px;margin-top:6px;overflow-wrap:anywhere}
 .tagsample{font-size:11px;font-weight:600;color:var(--mute);border:1px solid #3a3a40;border-radius:999px;padding:2px 8px;flex:none}
+.group-h{font-size:16px;font-weight:600;margin:20px 0 8px}
+.group-h:first-child{margin-top:4px}
+.prov-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 8px}
+.prov-h:first-child{margin-top:6px}
+.tagok{font-size:12px;font-weight:600;color:var(--green);border:1px solid #7fd8a050;border-radius:999px;padding:2px 10px}
+.sysnote{align-self:center;font-size:12px;color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:3px 12px;text-align:center}
 .dangerlink{border:0;background:transparent;color:var(--mute);font-size:13px;text-decoration:underline;padding:4px 0}
 
 @media(max-width:700px){
@@ -369,7 +375,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
             <!-- connections -->
             <section data-page="connections" class="hidden">
               <h2 class="h-page">Connections</h2>
-              <p class="sub">Accounts and machines the agent can use. Nothing real connects in the prototype.</p>
+              <p class="sub">Accounts, machines and model providers the agent can use. Nothing real connects in the prototype.</p>
               <div id="connList"></div>
             </section>
 
@@ -423,12 +429,19 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
         <div class="scrim hidden" data-sheet="model" role="dialog" aria-modal="true" aria-labelledby="modelH">
           <div class="sheet">
             <div class="sheet-h"><h2 id="modelH">Choose a model</h2><button class="x" data-close aria-label="Close">×</button></div>
-            <p>In the real app you connect your own API key. The prototype never asks for one.</p>
-            <label class="f" for="provider">Provider</label>
-            <select class="field" id="provider"><option>OpenAI</option><option>Anthropic</option><option>Google</option><option>OpenRouter</option></select>
-            <label class="f" for="modelName">Model name</label>
-            <input class="field" id="modelName" maxlength="60" placeholder="Type the model you want to use">
-            <button class="primary" id="saveModel">Use this model</button>
+            <p>Connect as many providers as you like, then pick a model. You can switch any time, and every reply shows which model gave it.</p>
+            <div id="modelBody"></div>
+          </div>
+        </div>
+
+        <!-- sheet: connect a provider -->
+        <div class="scrim hidden" data-sheet="provider" role="dialog" aria-modal="true" aria-labelledby="provH">
+          <div class="sheet">
+            <div class="sheet-h"><h2 id="provH">Connect provider</h2><button class="x" data-close aria-label="Close">×</button></div>
+            <p id="provIntro"></p>
+            <div id="provFields"></div>
+            <div class="err" id="provErr"></div>
+            <button class="primary" id="saveProvider">Connect</button>
           </div>
         </div>
 
@@ -471,6 +484,13 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   }
   function icon(name){ const s = document.createElementNS(SVGNS,'svg'); const u = document.createElementNS(SVGNS,'use'); u.setAttribute('href','#i-'+name); s.append(u); return s; }
 
+  const PROVIDERS = [
+    {id:'openai', name:'OpenAI', models:['sample-large','sample-fast']},
+    {id:'anthropic', name:'Anthropic', models:['sample-large','sample-fast']},
+    {id:'google', name:'Google', models:['sample-pro','sample-flash']},
+    {id:'openrouter', name:'OpenRouter', models:['sample-router-a','sample-router-b','sample-router-c']},
+    {id:'custom', name:'Custom endpoint', models:[], custom:true}
+  ];
   const REPOS = ['opensparkcode', 'sparkcode-docs', 'my-website', 'mobile-app', 'api-server'];
   const FOLDERS = {
     remote: ['~/Projects/opensparkcode', '~/Projects/sparkcode-docs', '~/Desktop/my-website'],
@@ -487,10 +507,14 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     vps:{name:'', addr:'', connected:false},
     remote:{name:'', paired:false}, pairCode:'482913',
     ready:false, justReady:'',
-    model:'', provider:'', task:'', stage:'', run:0,
+    model:'', provider:'', providers:{}, custom:{url:'', model:''}, task:'', stage:'', run:0,
     setup:{mode:null, key:'', sel:'', picked:[], names:{}, adding:false, busy:false, err:''}
   };
   try { if (localStorage.getItem('osc-gh') === '1') state.github = true; } catch (e) {}
+  try { const p = JSON.parse(localStorage.getItem('osc-providers') || 'null'); if (p) { state.providers = p.connected || {}; state.custom = p.custom || state.custom; state.provider = p.provider || ''; state.model = p.model || ''; } } catch (e) {}
+  function saveProviders(){ try { localStorage.setItem('osc-providers', JSON.stringify({connected:state.providers, custom:state.custom, provider:state.provider, model:state.model})); } catch (e) {} }
+  const modelsOf = p => p.custom ? (state.custom.model ? [state.custom.model] : []) : p.models;
+  const connectedCount = () => PROVIDERS.filter(p => state.providers[p.id]).length;
 
   /* ----- labels ----- */
   function whereLabel(){
@@ -556,8 +580,9 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     $('#inspWs').textContent = workspaceLabel();
     $('#settingsWhere').textContent = state.ready ? `${w} · ${workspaceLabel()}` : 'Not set up yet';
     const m = state.model ? `${state.provider} · ${state.model}` : 'Not chosen yet';
-    $('#modelLabel').textContent = state.model ? (state.model.length > 22 ? state.model.slice(0,22) + '…' : state.model) : 'Choose a model';
-    $('#settingsModel').textContent = m; $('#inspModel').textContent = m;
+    $('#modelLabel').textContent = state.model ? (m.length > 28 ? m.slice(0,28) + '…' : m) : 'Choose a model';
+    $('#settingsModel').textContent = state.model ? `${m} · ${connectedCount()} ${connectedCount() === 1 ? 'provider' : 'providers'} connected` : (connectedCount() ? `Not chosen yet · ${connectedCount()} connected` : 'No provider connected yet');
+    $('#inspModel').textContent = m;
 
     // home
     $('#machineDesc').textContent = state.kind === 'phone' ? 'Your computer from afar, or a cloud VPS you manage' : 'This computer, or a cloud VPS you manage';
@@ -579,6 +604,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   /* ----- connections page ----- */
   function renderConnections(){
     const box = $('#connList'); box.replaceChildren();
+    box.append(h('h3',{class:'group-h'},'Accounts and machines'));
     box.append(state.github
       ? item('branch', 'GitHub', `Connected as ${state.ghUser}` + (state.repos.length ? ` · ${state.repos.length} ${state.repos.length === 1 ? 'repository' : 'repositories'} added` : ''), 'Disconnect', () => disconnectGithub())
       : item('branch', 'GitHub', 'Not connected. Needed for cloud tasks.', 'Connect GitHub', () => startSetup('cloud'), 'primary'));
@@ -596,6 +622,19 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
         : item('phone', 'Phone remote', 'Control this computer from your phone.', 'Pair a phone', () => openSheet('pairphone'), 'primary'));
       box.append(item('laptop', 'This computer', state.machine === 'local' && state.folder ? `Folder: ${state.folder}` : 'No folder chosen yet.', state.machine === 'local' && state.folder ? 'Change folder' : 'Choose a folder', () => startSetup('machine', 'local'), state.folder ? '' : 'primary'));
     }
+    renderProviderRows(box);
+  }
+  function renderProviderRows(box){
+    box.append(h('h3',{class:'group-h'},'Model providers'));
+    PROVIDERS.forEach(p => box.append(state.providers[p.id]
+      ? item('star', p.name, p.custom ? `Connected \u00b7 ${state.custom.url}` : `Connected \u00b7 ${p.models.length} models`, 'Disconnect', () => disconnectProvider(p.id))
+      : item('star', p.name, 'Not connected. Bring your own key.', 'Connect', () => openProvider(p.id, false))));
+  }
+  function disconnectProvider(id){
+    const p = PROVIDERS.find(x => x.id === id); delete state.providers[id];
+    if (state.provider === p.name) { state.provider = ''; state.model = ''; }
+    if (p.custom) state.custom = {url:'', model:''};
+    saveProviders(); render(); toast(`${p.name} disconnected`);
   }
   function disconnectGithub(){
     state.github = false; try { localStorage.removeItem('osc-gh'); } catch (e) {}
@@ -774,12 +813,53 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   }
 
   /* ----- sheets ----- */
+  function hideSheets(){ $$('[data-sheet]').forEach(s => s.classList.add('hidden')); }
+  function closeSheets(){ hideSheets(); afterModel = null; }
   function openSheet(name){
-    closeSheets();
+    hideSheets();
+    if (name === 'model') buildModelSheet();
     const s = $(`[data-sheet="${name}"]`); s.classList.remove('hidden');
     const f = s.querySelector('input,select,button'); if (f) f.focus();
   }
-  function closeSheets(){ $$('[data-sheet]').forEach(s => s.classList.add('hidden')); }
+  function buildModelSheet(){
+    const box = $('#modelBody'); box.replaceChildren();
+    PROVIDERS.forEach(p => {
+      const conn = !!state.providers[p.id];
+      box.append(h('div',{class:'prov-h'}, h('strong',null,p.name), conn ? h('span',{class:'tagok'},'Connected') : h('button',{type:'button', class:'linkbtn', onclick:() => openProvider(p.id, true)}, 'Connect')));
+      if (conn) modelsOf(p).forEach(mn => box.append(h('button',{type:'button', class:'opt', role:'radio', 'aria-checked':String(state.provider === p.name && state.model === mn), onclick:() => chooseModel(p, mn)},
+        h('span',{class:'ic'}, icon('star')), h('span',null, h('strong',null,mn)), h('span',{class:'radio'}))));
+    });
+  }
+  function chooseModel(p, mn){
+    state.provider = p.name; state.model = mn; saveProviders();
+    const fn = afterModel; hideSheets(); afterModel = null; render(); toast(`Using ${p.name} \u00b7 ${mn}`);
+    if (fn) fn();
+  }
+  let provTarget = null, provBack = false;
+  function openProvider(id, fromModel){
+    const p = PROVIDERS.find(x => x.id === id); provTarget = p; provBack = !!fromModel;
+    $('#provH').textContent = `Connect ${p.name}`;
+    $('#provIntro').textContent = p.custom ? 'Use any endpoint that speaks a compatible API. Prototype only: nothing is saved or sent.' : 'Use your own API key. Prototype only: the key is never saved or sent, and any text works.';
+    const f = $('#provFields'); f.replaceChildren(); $('#provErr').textContent = '';
+    if (p.custom) f.append(h('label',{class:'f', for:'provUrl'},'Base URL'), h('input',{class:'field', id:'provUrl', placeholder:'https://llm.example.com/v1', autocomplete:'off', value:state.custom.url}), h('label',{class:'f', for:'provModel'},'Model name'), h('input',{class:'field', id:'provModel', placeholder:'my-model', autocomplete:'off', value:state.custom.model}));
+    f.append(h('label',{class:'f', for:'provKey'},'API key'), h('input',{class:'field', id:'provKey', type:'password', placeholder:'Paste your key', autocomplete:'off'}));
+    openSheet('provider');
+  }
+  $('#saveProvider').addEventListener('click', () => {
+    const p = provTarget; if (!p) return;
+    const key = $('#provKey').value.trim(), err = $('#provErr');
+    if (p.custom) {
+      const url = $('#provUrl').value.trim(), mod = $('#provModel').value.trim();
+      if (!url || !mod) { err.textContent = 'Enter a base URL and a model name.'; (!url ? $('#provUrl') : $('#provModel')).focus(); return; }
+      state.custom = {url, model:mod};
+    }
+    if (!key) { err.textContent = 'Enter a key to connect. Any text works in the prototype.'; $('#provKey').focus(); return; }
+    state.providers[p.id] = true;
+    if (!state.model && modelsOf(p).length) { state.provider = p.name; state.model = modelsOf(p)[0]; }
+    saveProviders(); toast(`${p.name} connected`);
+    if (provBack) openSheet('model'); else { hideSheets(); render(); }
+  });
+
   /* ----- sessions ----- */
   const wait = ms => new Promise(r => setTimeout(r, ms));
   let sessions = [], openId = null, afterModel = null;
@@ -833,7 +913,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     return lines;
   }
   const sessById = id => sessions.find(x => x.id === id);
-  function preview(x){ const m = x.messages[x.messages.length - 1]; if (!m) return 'No messages yet'; if (m.kind === 'plan') return 'Plan: ' + m.steps[1]; if (m.kind === 'result') return m.text; return m.text; }
+  function preview(x){ const m = [...x.messages].reverse().find(y => y.role !== 'note'); if (!m) return 'No messages yet'; if (m.kind === 'plan') return 'Plan: ' + m.steps[1]; if (m.kind === 'result') return m.text; return m.text; }
 
   function renderSessions(){
     const box = $('#sessionList'); box.replaceChildren();
@@ -842,7 +922,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
       const b = h('button',{type:'button', class:'sess', onclick:() => openSession(x.id)},
         h('span',{class:'top-row'}, h('strong',null,x.title), x.sample ? h('span',{class:'tagsample'},'Sample') : null),
         h('span',{class:'prev'}, preview(x)),
-        h('span',{class:'meta2'}, `${x.messages.length} ${x.messages.length === 1 ? 'message' : 'messages'} · ${x.updated} · ${x.ws.where}, ${x.ws.label}`));
+        h('span',{class:'meta2'}, `${x.messages.filter(y => y.role !== 'note').length} ${x.messages.filter(y => y.role !== 'note').length === 1 ? 'message' : 'messages'} · ${x.updated} · ${x.ws.where}, ${x.ws.label}`));
       box.append(b);
     });
     const side = $('#sideRecent'); side.replaceChildren();
@@ -861,6 +941,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     return h('div',{class:'msg agent'}, h('span',{class:'avatar'}, icon('star')), h('div',{class:'abody'}, h('div',{class:'ameta'}, `OpenSparkcode · ${m.model}`), ...content));
   }
   function renderMsg(x, m){
+    if (m.role === 'note') return h('div',{class:'sysnote'}, m.text);
     if (m.role === 'user') return h('div',{class:'msg user'}, h('div',{class:'bubble'}, m.text));
     if (m.kind === 'plan') {
       const ol = h('ol',{class:'plan'});
@@ -907,6 +988,8 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   }
 
   function sendMessage(x, text){
+    const lastAgent = [...x.messages].reverse().find(y => y.model);
+    if (lastAgent && lastAgent.model !== modelName()) x.messages.push({role:'note', text:`Switched to ${modelName()}`});
     x.messages.push({role:'user', text});
     if (x.title === 'New session') x.title = text.length > 42 ? text.slice(0,42) + '…' : text;
     x.messages.push({role:'agent', model:modelName(), kind:'plan', text:'Here is my plan. Approve it and I will start.', steps:planSteps(x.ws), status:'waiting', progress:0});
@@ -933,13 +1016,6 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     const x = {id:'s' + Date.now(), title:'New session', updated:'Just now', ws:currentWs(), messages:[]};
     sessions.unshift(x); openId = x.id; sendMessage(x, v); view('session'); renderChat(true);
   });
-  $('#saveModel').addEventListener('click', () => {
-    const v = $('#modelName').value.trim();
-    if (!v) { $('#modelName').focus(); toast('Type a model name first'); return; }
-    state.model = v; state.provider = $('#provider').value; closeSheets(); render(); toast('Model chosen');
-    if (afterModel) { const fn = afterModel; afterModel = null; fn(); }
-  });
-
   /* ----- global clicks ----- */
   document.addEventListener('click', e => {
     const v = e.target.closest('[data-view]'); if (v) view(v.dataset.view);
@@ -952,10 +1028,11 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     if (e.target.closest('[data-action="delsession"]')) { const x = sessById(openId); if (x) { sessions = sessions.filter(y => y !== x); saveSessions(); view('sessions'); toast('Session deleted'); } }
     if (e.target.closest('[data-action="reset"]')) {
       state.mode = null; state.machine = null; state.ready = false; state.justReady = ''; state.github = false; state.repos = []; state.folder = '';
-      state.vps = {name:'', addr:'', connected:false}; state.remote = {name:'', paired:false}; state.model = ''; state.provider = '';
+      state.vps = {name:'', addr:'', connected:false}; state.remote = {name:'', paired:false}; state.model = ''; state.provider = ''; state.providers = {}; state.custom = {url:'', model:''};
+      try { localStorage.removeItem('osc-providers'); } catch (er) {}
       sessions = seedSessions(); try { localStorage.removeItem('osc-sessions'); } catch (er) {}
       try { localStorage.removeItem('osc-gh'); } catch (er) {}
-      $('#prompt').value = ''; $('#modelName').value = ''; view('home'); toast('Started over');
+      $('#prompt').value = ''; view('home'); toast('Started over');
     }
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && e.target.id === 'prompt') $('#composer').requestSubmit(); });
