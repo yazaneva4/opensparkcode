@@ -2,6 +2,10 @@
 
 This is a frontend-only simulation. No account backend is required.
 
+## Where the controls appear
+
+The account card is rendered inside the prototype app's Settings screen, within the simulated device frame. It is not a separate page-level banner. Open Settings from the app navigation, then use the account buttons there.
+
 ## Demo interactions
 
 - Guest mode requires no login and continues using local browser storage.
