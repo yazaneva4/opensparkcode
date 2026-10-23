@@ -3,7 +3,7 @@ const path = require('node:path');
 const root = path.join(__dirname,'..');
 const out = path.join(root,'public');
 fs.rmSync(out,{recursive:true,force:true}); fs.mkdirSync(out,{recursive:true});
-for(const file of ["index.html", "app.html", "favicon.ico", "apple-touch-icon.png", "assets", "app-updates.js", "app-updates.css"]){fs.cpSync(path.join(root,file),path.join(out,file),{recursive:true});}
+for(const file of ["index.html", "favicon.ico", "apple-touch-icon.png", "assets", "app-updates.js", "app-updates.css"]){fs.cpSync(path.join(root,file),path.join(out,file),{recursive:true});}
 const file = path.join(out,'index.html');
 let html = fs.readFileSync(file,'utf8');
 html = html.replace(/ data-app-revision="[^"]*"/g,'');
