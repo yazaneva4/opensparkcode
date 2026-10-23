@@ -43,7 +43,7 @@
   function mountStyles() {
     const style = el("style");
     style.textContent = [
-      ".osc-account-strip{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:0 0 16px;padding:14px 16px;border:1px solid #2b2b30;border-radius:16px;background:linear-gradient(115deg,#141414,#0c0c0d);color:#f6f6f4}",
+      ".osc-account-strip{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:10px 0 18px;padding:14px 16px;border:1px solid #2b2b30;border-radius:16px;background:linear-gradient(115deg,#141414,#0c0c0d);color:#f6f6f4}",
       ".osc-account-copy{display:flex;align-items:flex-start;gap:12px;min-width:0;flex:1}",
       ".osc-account-orb{width:36px;height:36px;flex:0 0 36px;border:1px solid #ff7a1a66;border-radius:12px;background:#ff7a1a18;display:grid;place-items:center;color:#ff8a2b;font-weight:700}",
       ".osc-account-title{font-weight:700;font-size:15px;letter-spacing:.01em}",
@@ -71,23 +71,23 @@
     document.head.append(style);
   }
   function mountBanner() {
-    const stage = document.querySelector("#stage");
-    if (!stage || root) return;
+    const host = document.querySelector("#accountPrototypeCard");
+    if (!host || root) return;
     root = el("section", "osc-account-strip");
     root.setAttribute("aria-label", "Prototype account and sync controls");
     const copy = el("div", "osc-account-copy");
     copy.append(el("div", "osc-account-orb", "O"));
     const text = el("div");
-    text.append(el("div", "osc-account-title", "Your sessions, on desktop and phone"));
-    text.append(el("div", "osc-account-description", "Try account login and sync controls. The Desktop and Phone previews share this demo's current browser state."));
-    text.append(el("div", "osc-demo-label", "Prototype · no real account or cloud sync"));
+    text.append(el("div", "osc-account-title", "OpenSparkcode account"));
+    text.append(el("div", "osc-account-description", "Sign in to preview the account experience, or continue as a guest. All actions here are simulated inside this app prototype."));
+    text.append(el("div", "osc-demo-label", "Demo only · no real account or cloud sync"));
     statusNode = el("div", "osc-sync-status");
     text.append(statusNode);
     copy.append(text);
     root.append(copy, el("div", "osc-account-actions"));
-    stage.parentNode.insertBefore(root, stage);
+    host.replaceChildren(root);
     renderBanner();
-    if (account) setStatus("Demo account · " + account.label + " · no server connection");
+    if (account) setStatus("Demo account · " + account.label + " · stored in this browser only");
     else setStatus("Guest mode · local only · no sign-in required");
   }
   function renderBanner() {
