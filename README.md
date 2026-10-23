@@ -16,7 +16,7 @@ Installation and agent integrations are not live yet. The interface uses “Comi
 
 ## Prototype account and sync UI
 
-The app-preview includes a simulated email login, simulated GitHub login, guest mode, and a visual sync status. This is for demonstrating UX only: no real account is created, no credentials are sent or stored, and no sync request is made. The password entered in the demo is discarded. Demo-account state is stored in the current browser so the same preview can retain state when switching between its Desktop and Phone views; a separate browser or real device does not receive that state.
+The app-preview includes a simulated email login, simulated GitHub login, guest mode, and a visual sync status **inside the app's own Settings screen** (inside the simulated desktop/phone device frame, not as a webpage banner outside it). This is for demonstrating UX only: no real account is created, no credentials are sent or stored, and no sync request is made. The password entered in the demo is discarded. Demo-account state is stored in the current browser so the same preview can retain state when switching between its Desktop and Phone views; a separate browser or real device does not receive that state.
 
 Guests need no login and keep using local browser storage. Logging in does not make the agent, cloud workspace, GitHub integration, or VPS integration real. "Unlimited syncing" is not implemented in this prototype.
 
