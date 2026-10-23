@@ -14,11 +14,11 @@ OpenSparkcode agent installation website source.
 
 Installation and agent integrations are not live yet. The interface uses “Coming soon” labels intentionally. The app preview remains a clickable prototype for agent and remote operations.
 
-## Optional account sync
+## Prototype account and sync UI
 
-The app-preview source now includes an optional account layer. Guests can continue without login and keep data in the current browser only. Signed-in users can sync session history and non-secret model/provider preferences across desktop and phone. The sync layer excludes API keys, OAuth tokens, VPS credentials, and custom endpoint URLs.
+The app-preview includes a simulated email login, simulated GitHub login, guest mode, and a visual sync status. This is for demonstrating UX only: no real account is created, no credentials are sent or stored, and no sync request is made. The password entered in the demo is discarded. Demo-account state is stored in the current browser so the same preview can retain state when switching between its Desktop and Phone views; a separate browser or real device does not receive that state.
 
-Cloud sync requires a dedicated OpenSparkcode Supabase project to be configured before sign-in becomes active. Do not reuse the GrowthSpace CRM project. See docs/ACCOUNT-SYNC-SETUP.md and the SQL migration in supabase/migrations/. The account sync code has no arbitrary app-level device/session cap, but actual storage and bandwidth remain subject to provider quotas. Sign-in does not make prototype agents or remote integrations live.
+Guests need no login and keep using local browser storage. Logging in does not make the agent, cloud workspace, GitHub integration, or VPS integration real. "Unlimited syncing" is not implemented in this prototype.
 
 ## Preview locally
 
