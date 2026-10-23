@@ -297,11 +297,10 @@ function localPreferences() {
   const api = appBridge();
   if (api?.getSyncPreferences) return api.getSyncPreferences();
   const stored = readJSON("osc-providers", {});
-  return { connected: stored.connected || {}, provider: stored.provider || "", model: stored.model || "", customModel: stored.custom?.model || "" };
+  return { provider: stored.provider || "", model: stored.model || "", customModel: stored.custom?.model || "" };
 }
 function safePreferences(value) {
   return {
-    connected: value?.connected && typeof value.connected === "object" ? value.connected : {},
     provider: typeof value?.provider === "string" ? value.provider.slice(0, 100) : "",
     model: typeof value?.model === "string" ? value.model.slice(0, 160) : "",
     customModel: typeof value?.customModel === "string" ? value.customModel.slice(0, 160) : ""
@@ -331,7 +330,6 @@ async function syncNow(showToast) {
     const cloudPrefs = safePreferences(prefsResult.data?.preferences);
     const combinedPrefs = prefsResult.data
       ? {
-          connected: { ...localPrefs.connected, ...cloudPrefs.connected },
           provider: cloudPrefs.provider || localPrefs.provider,
           model: cloudPrefs.model || localPrefs.model,
           customModel: cloudPrefs.customModel || localPrefs.customModel
