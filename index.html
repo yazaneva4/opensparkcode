@@ -181,6 +181,18 @@ h1{max-width:12ch}
 
 </style>
 <script defer src="/app-updates.js"></script>
+<style>
+/* Optional account sync feature panel */
+.account-sync-feature{padding:52px 0;border-top:1px solid #242428;border-bottom:1px solid #242428;background:#0b0b0d}
+.account-sync-feature .sync-panel{display:flex;align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap;border:1px solid #2c2c31;border-radius:20px;background:linear-gradient(120deg,#121214,#0b0b0c);padding:clamp(22px,4vw,40px)}
+.account-sync-feature h2{font-family:'Chakra Petch',sans-serif;font-size:clamp(28px,4vw,42px);line-height:1.14;max-width:15em;margin:10px 0 12px}
+.account-sync-feature p{color:#b1b1b8;max-width:48em;line-height:1.65;margin:0}
+.account-sync-feature .sync-status{display:inline-flex;align-items:center;gap:8px;border:1px solid #54402e;border-radius:999px;background:#21160f;color:#ffb477;padding:8px 12px;font-size:12px;font-weight:700;letter-spacing:.04em;margin-top:18px}
+.account-sync-feature .sync-status:before{content:'';width:7px;height:7px;border-radius:50%;background:#ff7a1a;display:inline-block}
+.account-sync-feature .sync-link{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:12px 17px;border-radius:12px;background:#ff7a1a;color:#18100a;text-decoration:none;font-weight:700;white-space:nowrap}
+.account-sync-feature .sync-link:focus-visible{outline:3px solid #ffc28e;outline-offset:3px}
+@media(max-width:600px){.account-sync-feature{padding:30px 0}.account-sync-feature .sync-panel{align-items:flex-start}.account-sync-feature .sync-link{width:100%}}
+</style>
 </head>
 <body>
 
@@ -227,6 +239,20 @@ h1{max-width:12ch}
         <ol id="setup-steps"><li><span>01</span><div><strong>Choose your host</strong><p>A computer or server you manage holds the project and runs the agent.</p></div></li><li><span>02</span><div><strong>Pair your device</strong><p>A secure pairing flow is planned for connecting your browser to that host.</p></div></li><li><span>03</span><div><strong>Build from anywhere</strong><p>Review work from desktop, tablet, or phone while the host does the heavy lifting.</p></div></li></ol>
       </div>
       <div class="setup-note">This is an interactive product preview. No VPS is provisioned or contacted. Agent installation, remote pairing, VPS connections, and managed cloud execution are not available yet.</div>
+    </div>
+  </div>
+</section>
+
+<section id="account-sync" class="account-sync-feature">
+  <div class="wrap">
+    <div class="sync-panel">
+      <div>
+        <span class="eyebrow">OPTIONAL ACCOUNT</span>
+        <h2>One sign-in. Your sessions on every screen.</h2>
+        <p>OpenSparkcode stays usable as a guest: session data remains in that browser and is not uploaded. Open the app preview and choose Settings inside the app to find the simulated account login and sync controls. This is a prototype only: no data is uploaded, and a separate browser or real device does not receive your sessions. API keys, OAuth tokens, VPS credentials, and custom endpoint URLs stay out of the sync payload.</p>
+        <span class="sync-status">Prototype only · login and cloud sync are simulated</span>
+      </div>
+      <a class="sync-link" href="https://opensparkcode-app-preview.vercel.app/" rel="noopener">Open app preview ↗</a>
     </div>
   </div>
 </section>
