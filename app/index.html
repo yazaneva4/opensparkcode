@@ -265,6 +265,18 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
 .prov-h:first-child{margin-top:6px}
 .tagok{font-size:12px;font-weight:600;color:var(--green);border:1px solid #7fd8a050;border-radius:999px;padding:2px 10px}
 .sysnote{align-self:center;font-size:12px;color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:3px 12px;text-align:center}
+.provpage .setcard{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:6px 16px 16px;margin-bottom:14px}
+.provpage .setcard h3{font-size:16px;font-weight:600;margin:14px 0 2px}
+.provpage .hint{color:var(--mute);font-size:13px;margin:4px 0 0}
+.provpage textarea.field{min-height:92px;resize:vertical}
+.provpage select.field{appearance:auto}
+.provpage input[type=range]{width:100%;accent-color:var(--spark);margin-top:6px}
+.provpage .rangeval{float:right;color:var(--text);font-weight:600}
+.provpage .keyrow{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px}
+.provpage .keyrow code{font-family:inherit;letter-spacing:.12em}
+.provpage .acts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.provpage .saved{color:var(--green);font-size:13px;min-height:1em}
+.item .btns{display:flex;gap:8px;flex:none;flex-wrap:wrap;justify-content:flex-end}
 .dangerlink{border:0;background:transparent;color:var(--mute);font-size:13px;text-decoration:underline;padding:4px 0}
 
 @media(max-width:700px){
@@ -377,6 +389,14 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
               <h2 class="h-page">Connections</h2>
               <p class="sub">Accounts, machines and model providers the agent can use. Nothing real connects in the prototype.</p>
               <div id="connList"></div>
+            </section>
+
+            <!-- provider settings -->
+            <section data-page="provset" class="hidden provpage">
+              <div class="sess-head"><button class="linkbtn" data-view="connections">All connections</button></div>
+              <h2 class="h-page" id="psTitle">Provider settings</h2>
+              <p class="sub" id="psSub"></p>
+              <div id="psBody"></div>
             </section>
 
             <!-- settings -->
@@ -507,13 +527,17 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     vps:{name:'', addr:'', connected:false},
     remote:{name:'', paired:false}, pairCode:'482913',
     ready:false, justReady:'',
-    model:'', provider:'', providers:{}, custom:{url:'', model:''}, task:'', stage:'', run:0,
+    model:'', provider:'', providers:{}, custom:{url:'', model:''}, pset:{}, task:'', stage:'', run:0,
     setup:{mode:null, key:'', sel:'', picked:[], names:{}, adding:false, busy:false, err:''}
   };
   try { if (localStorage.getItem('osc-gh') === '1') state.github = true; } catch (e) {}
-  try { const p = JSON.parse(localStorage.getItem('osc-providers') || 'null'); if (p) { state.providers = p.connected || {}; state.custom = p.custom || state.custom; state.provider = p.provider || ''; state.model = p.model || ''; } } catch (e) {}
-  function saveProviders(){ try { localStorage.setItem('osc-providers', JSON.stringify({connected:state.providers, custom:state.custom, provider:state.provider, model:state.model})); } catch (e) {} }
-  const modelsOf = p => p.custom ? (state.custom.model ? [state.custom.model] : []) : p.models;
+  try { const p = JSON.parse(localStorage.getItem('osc-providers') || 'null'); if (p) { state.providers = p.connected || {}; state.custom = p.custom || state.custom; state.provider = p.provider || ''; state.model = p.model || ''; state.pset = p.pset || {}; } } catch (e) {}
+  function saveProviders(){ try { localStorage.setItem('osc-providers', JSON.stringify({connected:state.providers, custom:state.custom, provider:state.provider, model:state.model, pset:state.pset})); } catch (e) {} }
+  const psOf = id => Object.assign({baseUrl:'', temp:0.5, length:'medium', instructions:'', off:{}, def:''}, state.pset[id] || {});
+  const allModels = p => p.custom ? (state.custom.model ? [state.custom.model] : []) : p.models;
+  const modelsOf = p => { const off = psOf(p.id).off; return allModels(p).filter(m => !off[m]); };
+  const LENGTHS = {short:'Short replies', medium:'Medium replies', long:'Long replies'};
+  const cfgNote = () => { const p = PROVIDERS.find(x => x.name === state.provider); if (!p) return ''; const c = psOf(p.id); return `temp ${c.temp.toFixed(1)} \u00b7 ${c.length}` + (c.instructions.trim() ? ' \u00b7 custom instructions' : ''); };
   const connectedCount = () => PROVIDERS.filter(p => state.providers[p.id]).length;
 
   /* ----- labels ----- */
@@ -559,16 +583,18 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   function view(name){
     current = name;
     $$('[data-page]').forEach(p => p.classList.toggle('hidden', p.dataset.page !== name));
-    const navName = name === 'setup' ? 'home' : (name === 'session' ? 'sessions' : name);
+    const navName = name === 'setup' ? 'home' : (name === 'session' ? 'sessions' : (name === 'provset' ? 'connections' : name));
     $$('.navbtn[data-view]').forEach(b => b.dataset.view === navName ? b.setAttribute('aria-current','page') : b.removeAttribute('aria-current'));
     $('#main').scrollTop = 0;
     render();
   }
 
-  function item(iconName, title, sub, btnLabel, onClick, tone){
+  function item(iconName, title, sub, btnLabel, onClick, tone, extra){
     const b = h('div', {class:'item'});
     b.append(h('span',{class:'ic'}, icon(iconName)), h('span',{class:'grow'}, h('strong',null,title), h('small',null,sub)));
-    if (btnLabel) b.append(h('button', {type:'button', class: tone === 'primary' ? 'primary' : 'secondary', style:'padding:8px 14px;font-size:14px', onclick:onClick}, btnLabel));
+    const mk = (label, fn, t) => h('button', {type:'button', class: t === 'primary' ? 'primary' : 'secondary', style:'padding:8px 14px;font-size:14px', onclick:fn}, label);
+    if (btnLabel && extra) b.append(h('span',{class:'btns'}, mk(extra.label, extra.fn), mk(btnLabel, onClick, tone)));
+    else if (btnLabel) b.append(mk(btnLabel, onClick, tone));
     return b;
   }
 
@@ -598,6 +624,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     renderSessions();
     $('#modelLabel2').textContent = $('#modelLabel').textContent;
     renderConnections();
+    if (current === 'provset') renderProvSet();
     if (current === 'setup') renderSetup();
   }
 
@@ -627,7 +654,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
   function renderProviderRows(box){
     box.append(h('h3',{class:'group-h'},'Model providers'));
     PROVIDERS.forEach(p => box.append(state.providers[p.id]
-      ? item('star', p.name, p.custom ? `Connected \u00b7 ${state.custom.url}` : `Connected \u00b7 ${p.models.length} models`, 'Disconnect', () => disconnectProvider(p.id))
+      ? item('star', p.name, p.custom ? `Connected \u00b7 ${state.custom.url}` : `Connected \u00b7 ${p.models.length} models`, 'Disconnect', () => disconnectProvider(p.id), '', {label:'Settings', fn:() => openProvSet(p.id)})
       : item('star', p.name, 'Not connected. Bring your own key.', 'Connect', () => openProvider(p.id, false))));
   }
   function disconnectProvider(id){
@@ -825,7 +852,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     const box = $('#modelBody'); box.replaceChildren();
     PROVIDERS.forEach(p => {
       const conn = !!state.providers[p.id];
-      box.append(h('div',{class:'prov-h'}, h('strong',null,p.name), conn ? h('span',{class:'tagok'},'Connected') : h('button',{type:'button', class:'linkbtn', onclick:() => openProvider(p.id, true)}, 'Connect')));
+      box.append(h('div',{class:'prov-h'}, h('strong',null,p.name), conn ? h('span',{style:'display:flex;gap:10px;align-items:center'}, h('button',{type:'button', class:'linkbtn', onclick:() => { hideSheets(); afterModel = null; openProvSet(p.id); }}, 'Settings'), h('span',{class:'tagok'},'Connected')) : h('button',{type:'button', class:'linkbtn', onclick:() => openProvider(p.id, true)}, 'Connect')));
       if (conn) modelsOf(p).forEach(mn => box.append(h('button',{type:'button', class:'opt', role:'radio', 'aria-checked':String(state.provider === p.name && state.model === mn), onclick:() => chooseModel(p, mn)},
         h('span',{class:'ic'}, icon('star')), h('span',null, h('strong',null,mn)), h('span',{class:'radio'}))));
     });
@@ -859,6 +886,89 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     saveProviders(); toast(`${p.name} connected`);
     if (provBack) openSheet('model'); else { hideSheets(); render(); }
   });
+
+  /* ----- provider settings ----- */
+  let psId = null;
+  const psSaved = h('div',{class:'saved', 'aria-live':'polite'});
+  function openProvSet(id){ psId = id; view('provset'); }
+  function setPs(id, patch){ state.pset[id] = Object.assign(psOf(id), patch); saveProviders(); render(); }
+  function renderProvSet(){
+    const p = PROVIDERS.find(x => x.id === psId); if (!p) return;
+    const conn = !!state.providers[p.id], c = psOf(p.id), body = $('#psBody');
+    const keep = body.contains(document.activeElement) ? document.activeElement.id : '';
+    $('#psTitle').textContent = `${p.name} settings`;
+    $('#psSub').textContent = conn ? 'Changes save as you make them. They apply to every new message that uses this provider.' : 'Not connected. Connect it first, then these settings apply.';
+    body.replaceChildren();
+    const saved = psSaved, flash = () => { saved.textContent = 'Saved'; clearTimeout(flash.t); flash.t = setTimeout(() => saved.textContent = '', 1600); };
+
+    // connection
+    const conCard = h('div',{class:'setcard'}, h('h3',null,'Connection'));
+    conCard.append(h('div',{class:'keyrow'}, h('span',null, h('small',{style:'color:var(--mute);font-size:13px;display:block'},'API key'), conn ? h('code',null,'\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022') : h('span',{style:'color:var(--mute)'},'Not connected')),
+      h('button',{type:'button', class: conn ? 'secondary' : 'primary', style:'padding:8px 14px;font-size:14px', onclick:() => openProvider(p.id, false)}, conn ? 'Replace key' : 'Connect')));
+    conCard.append(h('p',{class:'hint'},'The prototype never saves or sends your key.'));
+    const url = h('input',{class:'field', id:'psUrl', placeholder: p.custom ? 'https://llm.example.com/v1' : 'Default endpoint', autocomplete:'off', value: p.custom ? state.custom.url : c.baseUrl, disabled:!conn});
+    url.addEventListener('change', () => { if (p.custom) { if (!url.value.trim()) { url.value = state.custom.url; return; } state.custom.url = url.value.trim(); saveProviders(); render(); } else setPs(p.id, {baseUrl:url.value.trim()}); flash(); });
+    conCard.append(h('label',{class:'f', for:'psUrl'}, p.custom ? 'Base URL' : 'Base URL (optional)'), url);
+    if (!p.custom) conCard.append(h('p',{class:'hint'},'Leave empty to use the standard endpoint. Set it to send requests through a proxy.'));
+    const testOut = h('div',{class:'hint', 'aria-live':'polite'});
+    const testBtn = h('button',{type:'button', class:'secondary', style:'padding:8px 14px;font-size:14px', disabled:!conn, onclick:async () => {
+      testBtn.disabled = true; testOut.textContent = 'Testing\u2026'; await wait(900); testBtn.disabled = false; testOut.textContent = 'Connection works (simulated).';
+    }}, 'Test connection');
+    conCard.append(h('div',{class:'acts'}, testBtn), testOut);
+    body.append(conCard);
+
+    // models
+    const modCard = h('div',{class:'setcard'}, h('h3',null,'Models'));
+    if (p.custom) {
+      const mn = h('input',{class:'field', id:'psModel', placeholder:'my-model', autocomplete:'off', value:state.custom.model, disabled:!conn});
+      mn.addEventListener('change', () => { const v = mn.value.trim(); if (!v) { mn.value = state.custom.model; return; } if (state.provider === p.name && state.model === state.custom.model) state.model = v; state.custom.model = v; saveProviders(); render(); flash(); });
+      modCard.append(h('label',{class:'f', for:'psModel'},'Model name'), mn);
+    } else {
+      modCard.append(h('p',{class:'hint'},'Choose which models show in the picker. At least one stays on.'));
+      allModels(p).forEach(mn => {
+        const on = !c.off[mn];
+        modCard.append(h('button',{type:'button', class:'opt', role:'checkbox', 'aria-checked':String(on), disabled:!conn, style:'margin-top:8px', onclick:() => {
+          const off = Object.assign({}, c.off);
+          if (on) { if (modelsOf(p).length <= 1) { toast('Keep at least one model on'); return; } off[mn] = true; } else delete off[mn];
+          const next = allModels(p).filter(m => !off[m]);
+          const patch = {off}; if (c.def && off[c.def]) patch.def = '';
+          setPs(p.id, patch);
+          if (state.provider === p.name && state.model === mn && off[mn]) { state.model = next[0]; saveProviders(); render(); }
+          flash();
+        }}, h('span',null, h('strong',null,mn)), h('span',{class:'box'}, icon('check'))));
+      });
+      const ms = modelsOf(p);
+      const sel = h('select',{class:'field', id:'psDef', disabled:!conn || !ms.length}, ...ms.map(m => h('option',{value:m, selected:(c.def || ms[0]) === m}, m)));
+      sel.addEventListener('change', () => { setPs(p.id, {def:sel.value}); flash(); });
+      modCard.append(h('label',{class:'f', for:'psDef'},'Default model'), sel);
+    }
+    body.append(modCard);
+
+    // behavior
+    const behCard = h('div',{class:'setcard'}, h('h3',null,'Behavior'));
+    const val = h('span',{class:'rangeval'}, c.temp.toFixed(1));
+    const rng = h('input',{type:'range', id:'psTemp', min:'0', max:'1', step:'0.1', value:String(c.temp), disabled:!conn, 'aria-label':'Temperature'});
+    rng.addEventListener('input', () => { val.textContent = Number(rng.value).toFixed(1); });
+    rng.addEventListener('change', () => { setPs(p.id, {temp:Number(rng.value)}); flash(); });
+    behCard.append(h('label',{class:'f', for:'psTemp'}, 'Creativity (temperature)', val), rng, h('p',{class:'hint'},'Lower is steadier and more exact. Higher is more varied.'));
+    const len = h('select',{class:'field', id:'psLen', disabled:!conn}, ...Object.keys(LENGTHS).map(k => h('option',{value:k, selected:c.length === k}, LENGTHS[k])));
+    len.addEventListener('change', () => { setPs(p.id, {length:len.value}); flash(); });
+    behCard.append(h('label',{class:'f', for:'psLen'},'Reply length'), len);
+    const ins = h('textarea',{class:'field', id:'psIns', placeholder:'For example: Keep changes small and explain them in plain words.', disabled:!conn}, c.instructions);
+    ins.addEventListener('change', () => { setPs(p.id, {instructions:ins.value.trim()}); flash(); });
+    behCard.append(h('label',{class:'f', for:'psIns'},'Instructions for this provider'), ins);
+    body.append(behCard);
+
+    // actions
+    const ms = modelsOf(p), def = c.def && ms.includes(c.def) ? c.def : ms[0];
+    const active = state.provider === p.name;
+    body.append(h('div',{class:'acts'},
+      h('button',{type:'button', class:'primary', disabled:!conn || !def || (active && state.model === def), onclick:() => { state.provider = p.name; state.model = def; saveProviders(); render(); toast(`Using ${p.name} \u00b7 ${def}`); }}, active && state.model === def ? 'In use' : 'Use this provider'),
+      h('button',{type:'button', class:'secondary', disabled:!conn, onclick:() => { state.pset[p.id] = {}; saveProviders(); render(); toast('Settings reset'); }}, 'Reset to defaults'),
+      saved));
+    if (conn) body.append(h('div',{style:'margin-top:10px'}, h('button',{type:'button', class:'dangerlink', onclick:() => { disconnectProvider(p.id); }}, `Disconnect ${p.name}`)));
+    if (keep) { const el = document.getElementById(keep); if (el && !el.disabled) el.focus({preventScroll:true}); }
+  }
 
   /* ----- sessions ----- */
   const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -938,7 +1048,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
 
   function refresh(x){ renderSessions(); if (current === 'session' && openId === x.id) renderChat(false); }
   function agentBlock(m, ...content){
-    return h('div',{class:'msg agent'}, h('span',{class:'avatar'}, icon('star')), h('div',{class:'abody'}, h('div',{class:'ameta'}, `OpenSparkcode · ${m.model}`), ...content));
+    return h('div',{class:'msg agent'}, h('span',{class:'avatar'}, icon('star')), h('div',{class:'abody'}, h('div',{class:'ameta'}, `OpenSparkcode · ${m.model}` + (m.cfg ? ` · ${m.cfg}` : '')), ...content));
   }
   function renderMsg(x, m){
     if (m.role === 'note') return h('div',{class:'sysnote'}, m.text);
@@ -992,7 +1102,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     if (lastAgent && lastAgent.model !== modelName()) x.messages.push({role:'note', text:`Switched to ${modelName()}`});
     x.messages.push({role:'user', text});
     if (x.title === 'New session') x.title = text.length > 42 ? text.slice(0,42) + '…' : text;
-    x.messages.push({role:'agent', model:modelName(), kind:'plan', text:'Here is my plan. Approve it and I will start.', steps:planSteps(x.ws), status:'waiting', progress:0});
+    x.messages.push({role:'agent', model:modelName(), cfg:cfgNote(), kind:'plan', text:'Here is my plan. Approve it and I will start.', steps:planSteps(x.ws), status:'waiting', progress:0});
     x.updated = 'Just now';
     sessions = [x, ...sessions.filter(y => y !== x)]; saveSessions(); refresh(x);
   }
@@ -1028,7 +1138,7 @@ label.f{display:block;font-size:14px;color:var(--mute);margin:14px 0 6px}
     if (e.target.closest('[data-action="delsession"]')) { const x = sessById(openId); if (x) { sessions = sessions.filter(y => y !== x); saveSessions(); view('sessions'); toast('Session deleted'); } }
     if (e.target.closest('[data-action="reset"]')) {
       state.mode = null; state.machine = null; state.ready = false; state.justReady = ''; state.github = false; state.repos = []; state.folder = '';
-      state.vps = {name:'', addr:'', connected:false}; state.remote = {name:'', paired:false}; state.model = ''; state.provider = ''; state.providers = {}; state.custom = {url:'', model:''};
+      state.vps = {name:'', addr:'', connected:false}; state.remote = {name:'', paired:false}; state.model = ''; state.provider = ''; state.providers = {}; state.custom = {url:'', model:''}; state.pset = {};
       try { localStorage.removeItem('osc-providers'); } catch (er) {}
       sessions = seedSessions(); try { localStorage.removeItem('osc-sessions'); } catch (er) {}
       try { localStorage.removeItem('osc-gh'); } catch (er) {}
