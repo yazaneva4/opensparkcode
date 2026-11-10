@@ -29,12 +29,12 @@ test('mobile and web offer remote and cloud VPS but no on-device local mode', ()
     assert.ok(match, 'Missing platform: ' + platform);
     assert.match(match[1], /Remote control/);
     assert.match(match[1], /Cloud VPS/);
-    assert.doesNotMatch(match[1], /<span class="chip">Local<\\/span>/);
+    assert.doesNotMatch(match[1], /<span class="chip">Local<\/span>/);
   }
   for (const platform of ['Linux', 'macOS', 'Windows']) {
     const match = html.match(new RegExp('<h3>' + platform + '<\\/h3>([\\s\\S]*?)<\\/article>'));
     assert.ok(match, 'Missing platform: ' + platform);
-    assert.match(match[1], /<span class="chip">Local<\\/span>/);
+    assert.match(match[1], /<span class="chip">Local<\/span>/);
     assert.match(match[1], /Cloud VPS/);
   }
 });
